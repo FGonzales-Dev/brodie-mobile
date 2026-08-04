@@ -22,8 +22,7 @@ class EmergencyContactsController extends _$EmergencyContactsController {
           phone: phone,
           relationship: relationship,
         );
-    ref.invalidateSelf();
-    await future;
+    await _refresh();
   }
 
   Future<void> updateContact({
@@ -38,13 +37,17 @@ class EmergencyContactsController extends _$EmergencyContactsController {
           phone: phone,
           relationship: relationship,
         );
-    ref.invalidateSelf();
-    await future;
+    await _refresh();
   }
 
   Future<void> deleteContact(String id) async {
     await ref.read(emergencyContactRepositoryProvider).deleteContact(id);
-    ref.invalidateSelf();
-    await future;
+    await _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final userId = Supabase.instance.client.auth.currentUser!.id;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(emergencyContactRepositoryProvider).getContacts(userId));
   }
 }

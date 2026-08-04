@@ -60,18 +60,18 @@ class ProfileScreen extends ConsumerWidget {
                 CircleAvatar(
                   radius: 36,
                   child: Text(
-                    (profileAsync.value?.displayName?.isNotEmpty ?? false)
-                        ? profileAsync.value!.displayName![0].toUpperCase()
+                    (profileAsync.value?.username?.isNotEmpty ?? false)
+                        ? profileAsync.value!.username![0].toUpperCase()
                         : (email.isNotEmpty ? email[0].toUpperCase() : '?'),
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  profileAsync.value?.displayName?.isNotEmpty ?? false ? profileAsync.value!.displayName! : email,
+                  (profileAsync.value?.username?.isNotEmpty ?? false) ? '@${profileAsync.value!.username}' : email,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                if ((profileAsync.value?.displayName?.isNotEmpty ?? false) && email.isNotEmpty)
+                if ((profileAsync.value?.username?.isNotEmpty ?? false) && email.isNotEmpty)
                   Text(
                     email,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -82,12 +82,6 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-          ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: const Text('Edit Profile'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/profile/edit'),
-          ),
           ListTile(
             leading: const Icon(Icons.two_wheeler_outlined),
             title: const Text('Vehicle Management'),

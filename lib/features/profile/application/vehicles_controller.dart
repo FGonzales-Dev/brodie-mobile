@@ -17,19 +17,22 @@ class VehiclesController extends _$VehiclesController {
   Future<void> addVehicle({required VehicleType type, required String name}) async {
     final userId = Supabase.instance.client.auth.currentUser!.id;
     await ref.read(vehicleRepositoryProvider).addVehicle(userId: userId, type: type, name: name);
-    ref.invalidateSelf();
-    await future;
+    await _refresh();
   }
 
   Future<void> updateVehicle({required String id, required VehicleType type, required String name}) async {
     await ref.read(vehicleRepositoryProvider).updateVehicle(id: id, type: type, name: name);
-    ref.invalidateSelf();
-    await future;
+    await _refresh();
   }
 
   Future<void> deleteVehicle(String id) async {
     await ref.read(vehicleRepositoryProvider).deleteVehicle(id);
-    ref.invalidateSelf();
-    await future;
+    await _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final userId = Supabase.instance.client.auth.currentUser!.id;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref.read(vehicleRepositoryProvider).getVehicles(userId));
   }
 }

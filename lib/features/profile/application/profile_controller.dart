@@ -14,14 +14,6 @@ class ProfileController extends _$ProfileController {
     return ref.read(profileRepositoryProvider).getProfile(userId);
   }
 
-  Future<void> updateDisplayName(String displayName) async {
-    final userId = Supabase.instance.client.auth.currentUser!.id;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() {
-      return ref.read(profileRepositoryProvider).updateProfile(userId: userId, displayName: displayName);
-    });
-  }
-
   Future<void> deleteAccount() async {
     await ref.read(profileRepositoryProvider).deleteAccount();
   }
