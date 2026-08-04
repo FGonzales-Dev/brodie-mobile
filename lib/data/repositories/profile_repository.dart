@@ -15,18 +15,23 @@ class ProfileRepository {
     return Profile.fromJson(response);
   }
 
-  Future<Profile> updateProfile({required String userId, required String displayName}) async {
-    final response = await _client
-        .from('profiles')
-        .update({'display_name': displayName, 'updated_at': DateTime.now().toIso8601String()})
-        .eq('id', userId)
-        .select()
-        .single();
-    return Profile.fromJson(response);
-  }
-
   Future<void> deleteAccount() {
     return _client.rpc('delete_own_account');
+  }
+
+  Future<bool> isUsernameAvailable(String username) async {
+    final response = await _client.rpc('is_username_available', params: {'check_username': username});
+    return response as bool;
+  }
+
+  Future<Profile> setUsername(String username) async {
+    final response = await _client.rpc('set_username', params: {'new_username': username});
+    return Profile.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<List<Profile>> searchUsers(String query) async {
+    final response = await _client.rpc('search_users', params: {'search_query': query});
+    return (response as List).map((row) => Profile.fromJson(row as Map<String, dynamic>)).toList();
   }
 }
 
