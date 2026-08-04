@@ -47,3 +47,7 @@ app.*.map.json
 # envied env files (contain secrets, never commit)
 *.env
 !*.env.example
+
+# Generated code (build_runner: riverpod_generator, freezed, json_serializable, envied)
+*.g.dart
+*.freezed.dart
