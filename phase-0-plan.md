@@ -35,40 +35,41 @@ Once `flutter` is confirmed working:
 
 ---
 
-## Step 3 — [Me] Local-first Supabase setup
+## Step 3 — [You + Me] Local-first Supabase setup
 Per spec section 3.2 — no hosted account needed for this step:
-1. `supabase init` inside the repo (creates `supabase/` folder, migrations tracked in git from day one).
-2. `supabase start` to bring up the local Docker stack (Postgres+PostGIS, Auth, Realtime, Storage, Studio).
-3. Set up `envied` with a `dev` env pointed at the local Supabase URL + local anon key `supabase start` prints out.
-4. Initialize `supabase_flutter` in `main.dart` against that local instance.
-5. Document the `supabase start` / `supabase db reset` workflow in a short README section so Phase 1 schema work starts from a clean, reproducible local DB.
+0. **[You]** Install Docker Desktop (WSL2 backend, not Hyper-V, on Windows 11) and confirm it's running — `supabase start` runs Postgres+PostGIS, Auth, Realtime, Storage, and Studio as Docker containers, so this is a hard prerequisite before anything else in this step will work.
+1. **[Me]** `supabase init` inside the repo (creates `supabase/` folder, migrations tracked in git from day one).
+2. **[Me]** `supabase start` to bring up the local Docker stack (Postgres+PostGIS, Auth, Realtime, Storage, Studio).
+3. **[Me]** Set up `envied` with a `dev` env pointed at the local Supabase URL + local anon key `supabase start` prints out.
+4. **[Me]** Initialize `supabase_flutter` in `main.dart` against that local instance.
+5. **[Me]** Document the `supabase start` / `supabase db reset` workflow in a short README section so Phase 1 schema work starts from a clean, reproducible local DB.
 
 **Checkpoint:** app builds and its Supabase client successfully connects to the **local** instance — no hosted project required yet.
 
 ---
 
-## Step 4 — [You] Create Firebase project
-1. Create a Firebase project, register iOS + Android apps.
-2. Download `google-services.json` and `GoogleService-Info.plist` and hand them to me.
-
-(Supabase hosted project and Codemagic account creation are deferred to Step 6, once you're ready to share a build or wire up CI.)
+## Step 4 — [You + Me] Hosted Supabase + CI pipeline
+Do this when you're ready to share a build off this machine, or want CI running:
+1. **[You]** Create the hosted Supabase project, grab the project URL + anon key. Create a Codemagic account and connect this GitHub repo.
+2. **[Me]** Add a `staging`/`prod` `envied` env pointed at the hosted project. Write `codemagic.yaml` (build + lint on push, store deploy skipped for now) and the `supabase-migrations.yml` GitHub Action from spec section 3.3.
+3. **[You]** Add the three GitHub repo secrets (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`), then confirm the Codemagic build goes green and migrations push to the hosted project.
 
 ---
 
-## Step 5 — [Me] Wire up Firebase
+## Step 5 — [You] Create Firebase project
+1. Create a Firebase project, register iOS + Android apps.
+2. Download `google-services.json` and `GoogleService-Info.plist` and hand them to me.
+
+Moved to the end since Firebase here is analytics/crash reporting only — it doesn't block the app building, running, or talking to Supabase, so it's the lowest-priority piece of Phase 0.
+
+---
+
+## Step 6 — [Me] Wire up Firebase
 Once you hand me the Firebase config files:
 1. Drop them into the project, initialize Crashlytics + Analytics.
 2. Fire one test event/crash to confirm both report correctly in the Firebase console.
 
 **Checkpoint:** matches the spec's Phase 0 goal — "empty app that builds, connects to Supabase, and reports to Firebase" (Supabase here being the local instance, which is a faithful stand-in for this checkpoint during development).
-
----
-
-## Step 6 — [You + Me] Hosted Supabase + CI pipeline
-Do this when you're ready to share a build off this machine, or want CI running:
-1. **[You]** Create the hosted Supabase project, grab the project URL + anon key. Create a Codemagic account and connect this GitHub repo.
-2. **[Me]** Add a `staging`/`prod` `envied` env pointed at the hosted project. Write `codemagic.yaml` (build + lint on push, store deploy skipped for now) and the `supabase-migrations.yml` GitHub Action from spec section 3.3.
-3. **[You]** Add the three GitHub repo secrets (`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`), then confirm the Codemagic build goes green and migrations push to the hosted project.
 
 ---
 
