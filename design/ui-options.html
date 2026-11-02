@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brodie UI Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--page:#E9E8E4;--page-text:#17191C;--page-muted:#5E646E;--page-card:#F7F6F3;--page-line:#D6D4CE}
+@media (prefers-color-scheme:dark){:root{--page:#0B0C0E;--page-text:#EDEDEB;--page-muted:#8D939C;--page-card:#15171A;--page-line:#26292E}}
+body{background:var(--page);color:var(--page-text);font:15px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1600px;margin:0 auto;padding:32px 16px 64px}
+header h1{font-size:28px;letter-spacing:-.02em}
+header p{color:var(--page-muted);max-width:760px;margin-top:6px}
+.controls{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 8px}
+.opt{flex:1 1 240px;text-align:left;border:1.5px solid var(--page-line);background:var(--page-card);color:inherit;border-radius:14px;padding:14px 16px;cursor:pointer;font:inherit}
+.opt b{display:block;font-size:16px}
+.opt span{color:var(--page-muted);font-size:13px}
+.opt[aria-pressed=true]{border-color:#FF5A1F;box-shadow:0 0 0 3px rgba(255,90,31,.18)}
+.modes{display:flex;gap:4px;background:var(--page-card);border:1.5px solid var(--page-line);border-radius:12px;padding:4px;align-self:center}
+.modes button{border:0;background:none;color:var(--page-muted);font:600 13px Inter;padding:8px 14px;border-radius:8px;cursor:pointer}
+.modes button[aria-pressed=true]{background:var(--page-text);color:var(--page)}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0 28px}
+.notes div{background:var(--page-card);border:1px solid var(--page-line);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--page-muted)}
+.notes strong{color:var(--page-text);display:block;font-size:13px;margin-bottom:2px}
+.stage{display:flex;gap:28px;overflow-x:auto;padding:8px 4px 24px;scroll-snap-type:x mandatory}
+.shot{flex:0 0 auto;scroll-snap-align:start}
+.shot figcaption{font-size:13px;color:var(--page-muted);margin-top:10px;text-align:center}
+.phone{width:320px;height:680px;border-radius:44px;padding:10px;background:#050505;box-shadow:0 30px 60px -20px rgba(0,0,0,.45),inset 0 0 0 2px #2a2a2a}
+.screen{position:relative;width:100%;height:100%;border-radius:35px;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;line-height:1.35}
+
+/* ---------- design tokens: 3 directions x light/dark ---------- */
+.stage{--route:var(--accent);--route-case:rgba(0,0,0,.28);--me:#3B82F6;--link:var(--accent)}
+[data-opt=a]{--font-body:Inter,sans-serif;--font-head:Rajdhani,sans-serif;--head-w:700;--head-tt:none;--head-ls:.01em;--r:18px;--r-sm:12px;--btn-h:52px;--bw:1px;--nav-h:84px;--shadow:0 10px 30px -10px rgba(0,0,0,.55)}
+[data-opt=a][data-mode=dark]{--bg:#0E1013;--surface:#1A1D22;--surface2:#242830;--line:#2C3139;--text:#F2F2F0;--muted:#8B93A1;--accent:#FF5A1F;--on-accent:#fff;--btn:#FF5A1F;--on-btn:#fff;--accent2:#FFB800;--ok:#2ECC71;--danger:#E23D3D;--glass:rgba(26,29,34,.84);--m-bg:#15181C;--m-road:#2B3038;--m-road2:#1E2227;--m-water:#0E1A24;--m-park:#152019;--m-label:#596170}
+[data-opt=a][data-mode=light]{--bg:#F7F7F5;--surface:#fff;--surface2:#F0F0ED;--line:#E2E2DE;--text:#121417;--muted:#6B7280;--accent:#FF5A1F;--on-accent:#fff;--btn:#FF5A1F;--on-btn:#fff;--accent2:#C98F00;--ok:#219653;--danger:#D32F2F;--glass:rgba(255,255,255,.9);--m-bg:#EDEBE6;--m-road:#fff;--m-road2:#F7F6F2;--m-water:#C9DCEB;--m-park:#D8E6CF;--m-label:#8A8F98;--route-case:rgba(0,0,0,.12)}
+[data-opt=b]{--font-body:Inter,sans-serif;--font-head:Inter,sans-serif;--head-w:700;--head-tt:none;--head-ls:-.025em;--r:24px;--r-sm:16px;--btn-h:54px;--bw:0px;--nav-h:76px;--shadow:0 12px 40px -14px rgba(16,24,40,.25)}
+[data-opt=b][data-mode=light]{--bg:#F4F4F1;--surface:#fff;--surface2:#F1F1EE;--line:#E7E6E2;--text:#111315;--muted:#71767F;--accent:#FF5A1F;--on-accent:#fff;--btn:#111315;--on-btn:#fff;--accent2:#C98F00;--ok:#1F9D55;--danger:#D32F2F;--glass:rgba(255,255,255,.95);--m-bg:#F0EEE9;--m-road:#fff;--m-road2:#FAF9F6;--m-water:#CFE0EE;--m-park:#DDEBD3;--m-label:#9097A0;--route-case:rgba(0,0,0,.1)}
+[data-opt=b][data-mode=dark]{--bg:#111214;--surface:#1C1D20;--surface2:#26272B;--line:#2D2E33;--text:#F4F4F2;--muted:#9A9EA6;--accent:#FF6A33;--on-accent:#fff;--btn:#F4F4F2;--on-btn:#111214;--accent2:#FFB800;--ok:#34C46E;--danger:#EF4444;--glass:rgba(28,29,32,.95);--m-bg:#1A1B1E;--m-road:#2E3035;--m-road2:#232428;--m-water:#14202B;--m-park:#1A241C;--m-label:#62666E}
+[data-opt=c]{--font-body:Inter,sans-serif;--font-head:"Barlow Condensed",sans-serif;--head-w:800;--head-tt:uppercase;--head-ls:.02em;--r:4px;--r-sm:3px;--btn-h:60px;--bw:2px;--nav-h:72px;--shadow:none}
+[data-opt=c][data-mode=dark]{--bg:#000;--surface:#101010;--surface2:#1C1C1C;--line:#2A2A2A;--text:#fff;--muted:#9A9A9A;--accent:#FFC400;--on-accent:#000;--btn:#FFC400;--on-btn:#000;--accent2:#FF5A1F;--ok:#00E676;--danger:#FF3B30;--glass:#0A0A0A;--m-bg:#0B0B0B;--m-road:#262626;--m-road2:#161616;--m-water:#071521;--m-park:#0D170F;--m-label:#555;--me:#fff}
+[data-opt=c][data-mode=light]{--bg:#F2F0EA;--surface:#fff;--surface2:#E9E6DD;--line:#111;--text:#0A0A0A;--muted:#5A5A5A;--accent:#FFC400;--on-accent:#000;--btn:#0A0A0A;--on-btn:#FFC400;--accent2:#E04E12;--ok:#0A8F45;--danger:#D50000;--glass:#fff;--m-bg:#E8E5DC;--m-road:#fff;--m-road2:#F5F3EE;--m-water:#BFD6E6;--m-park:#CFE0C4;--m-label:#777;--route:#0A0A0A;--route-case:#FFC400;--link:#0A0A0A;--me:#0A0A0A}
+
+/* ---------- shared components ---------- */
+.h{font-family:var(--font-head);font-weight:var(--head-w);text-transform:var(--head-tt);letter-spacing:var(--head-ls);line-height:1.02}
+.sb{position:absolute;top:0;left:0;right:0;height:40px;display:flex;justify-content:space-between;align-items:center;padding:0 26px;font:600 13px Inter;z-index:6}
+.sb i{display:flex;gap:5px}.sb i b{width:15px;height:9px;border-radius:2px;background:currentColor;opacity:.85}
+.ico{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.map{position:absolute;inset:0;width:100%;height:100%}
+.route{fill:none;stroke:var(--route);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.route-case{fill:none;stroke:var(--route-case);stroke-width:11;stroke-linecap:round;stroke-linejoin:round}
+.halo{fill:var(--me);opacity:.18}.me{fill:var(--me);stroke:var(--bg);stroke-width:3}
+.pin{fill:var(--accent);stroke:var(--bg);stroke-width:3}
+.btn{height:var(--btn-h);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;gap:8px;font:600 15px Inter;background:var(--btn);color:var(--on-btn);border:var(--bw) solid var(--btn)}
+.btn.ghost{background:transparent;color:var(--text);border:1.5px solid var(--line)}
+[data-opt=b] .btn{border-radius:999px}
+[data-opt=c] .btn{font:800 20px "Barlow Condensed";text-transform:uppercase;letter-spacing:.06em}
+[data-opt=c] .btn.ghost{border-width:2px}
+.muted{color:var(--muted);font-size:13px}
+.av{width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font:700 14px Inter;flex:none}
+.av.c2{background:#3B82F6;color:#fff}.av.c3{background:#10B981;color:#fff}.av.c4{background:#A855F7;color:#fff}
+[data-opt=c] .av{border-radius:3px}
+
+/* auth */
+.auth{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:0 22px 30px;gap:12px}
+.hero{position:absolute;left:0;right:0;top:0;height:330px;overflow:hidden}
+.hero svg{width:100%;height:100%}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,transparent 25%,var(--bg) 92%)}
+[data-opt=b] .hero{left:14px;right:14px;top:48px;height:220px;border-radius:var(--r)}
+[data-opt=b] .hero::after{background:linear-gradient(to bottom,transparent 60%,rgba(0,0,0,.08))}
+.auth>*{position:relative}
+.logo{width:52px;height:52px;border-radius:var(--r-sm);background:var(--accent);display:grid;place-items:center;margin-bottom:4px}
+.logo svg{width:26px;height:26px;fill:var(--on-accent)}
+.title{font-size:42px}
+[data-opt=b] .title{font-size:32px}
+[data-opt=c] .title{font-size:52px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:8px}
+.field{height:var(--btn-h);border-radius:var(--r-sm);background:var(--surface);border:1.5px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 14px;color:var(--muted)}
+.field span{flex:1;color:var(--text)}
+.field em{font-style:normal;font-size:13px;color:var(--link);font-weight:600}
+[data-opt=b] .field{border:0;box-shadow:inset 0 0 0 1px var(--line)}
+[data-opt=c] .field{border-width:2px}
+.foot{text-align:center;color:var(--muted);font-size:13px;margin-top:2px}.foot b{color:var(--text)}
+
+/* map + sheet */
+.search{position:absolute;top:48px;left:14px;right:14px;height:52px;border-radius:var(--r);background:var(--glass);backdrop-filter:blur(10px);display:flex;align-items:center;gap:10px;padding:0 8px 0 16px;color:var(--muted);box-shadow:var(--shadow);border:var(--bw) solid var(--line);z-index:4}
+[data-opt=a] .search,[data-opt=b] .search{border-radius:999px}
+.search span{flex:1;font-size:15px}
+.sheet{position:absolute;left:0;right:0;bottom:var(--nav-h);background:var(--surface);padding:10px 16px 16px;border-radius:var(--r) var(--r) 0 0;box-shadow:0 -10px 30px -12px rgba(0,0,0,.35);z-index:3}
+[data-opt=a] .sheet{left:10px;right:10px;bottom:calc(var(--nav-h) + 4px);border-radius:var(--r);border:1px solid var(--line)}
+[data-opt=c] .sheet{border-top:3px solid var(--accent);box-shadow:none}
+.grab{width:36px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
+[data-opt=c] .grab{display:none}
+.dest{display:flex;align-items:flex-start;gap:12px}.dest>div:not(.x){flex:1}
+.dname{font-size:26px}
+[data-opt=b] .dname{font-size:20px}
+[data-opt=c] .dname{font-size:30px}
+.x{width:32px;height:32px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;color:var(--muted)}
+.x .ico{width:16px;height:16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.stats div{background:var(--surface2);border-radius:var(--r-sm);padding:9px 11px}
+.stats b{display:block;font-size:28px;color:var(--text)}
+[data-opt=b] .stats div{background:none;padding:0}
+[data-opt=b] .stats b{font-size:20px}
+[data-opt=c] .stats b{font-size:32px}
+.stats span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.row{display:flex;gap:10px}.row>*{flex:1}
+
+/* bottom nav */
+.nav{position:absolute;left:0;right:0;bottom:0;display:flex;z-index:4}
+.nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font:600 11px Inter}
+.nav a.on{color:var(--accent)}
+[data-opt=a] .nav{left:14px;right:14px;bottom:14px;height:60px;border-radius:999px;background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--line);box-shadow:var(--shadow);padding:0 7px}
+[data-opt=a] .nav a span{display:none}
+[data-opt=a] .nav a.on{flex:1.7;flex-direction:row;gap:6px;background:var(--accent);color:var(--on-accent);border-radius:999px;height:46px}
+[data-opt=a] .nav a.on span{display:inline;font-size:13px}
+[data-opt=b] .nav{height:76px;padding-bottom:14px;background:var(--surface);border-top:1px solid var(--line)}
+[data-opt=b] .nav a.on{color:var(--text)}
+[data-opt=b] .nav a.on .ico{stroke:var(--accent)}
+[data-opt=c] .nav{height:72px;background:var(--glass);border-top:2px solid var(--line)}
+[data-opt=c] .nav a{font:700 13px "Barlow Condensed";text-transform:uppercase;letter-spacing:.08em}
+[data-opt=c] .nav a.on{background:var(--accent);color:var(--on-accent)}
+
+/* list screens */
+.top{position:absolute;top:40px;left:0;right:0;bottom:var(--nav-h);overflow:hidden;padding:8px 16px 0}
+.ttl{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ttl .h{font-size:34px}
+[data-opt=b] .ttl .h{font-size:28px}
+[data-opt=c] .ttl .h{font-size:40px}
+.iconbtn{position:relative;width:40px;height:40px;border-radius:50%;background:var(--surface);display:grid;place-items:center;border:var(--bw) solid var(--line)}
+[data-opt=c] .iconbtn{border-radius:3px}
+.badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:var(--danger);color:#fff;font:700 10px/18px Inter;text-align:center;padding:0 5px}
+.card{background:var(--surface);border-radius:var(--r);padding:14px;border:var(--bw) solid var(--line);margin-bottom:12px}
+[data-opt=b] .card{box-shadow:var(--shadow)}
+.card.hot{border-color:var(--accent)}
+[data-opt=b] .card.hot{box-shadow:var(--shadow),inset 0 0 0 1.5px var(--accent)}
+.live{display:inline-flex;align-items:center;gap:6px;font:700 10px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--ok)}
+.live::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 25%,transparent)}
+.stack{display:flex}.stack .av{width:30px;height:30px;font-size:12px;border:2px solid var(--surface);margin-left:-8px}.stack .av:first-child{margin-left:0}
+.label{font:700 11px Inter;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+[data-opt=c] .label{font:700 14px "Barlow Condensed";letter-spacing:.12em}
+.list{background:var(--surface);border-radius:var(--r);border:var(--bw) solid var(--line);overflow:hidden}
+[data-opt=b] .list{box-shadow:var(--shadow)}
+.li{display:flex;align-items:center;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+.li:first-child{border-top:0}
+.li>div:not(.av):not(.tile){flex:1;font-weight:500}.li small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.li .chev{color:var(--muted);width:16px;height:16px}
+.tile{width:36px;height:36px;border-radius:var(--r-sm);background:var(--surface2);display:grid;place-items:center}
+.tile .ico{width:18px;height:18px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tiles div{background:var(--surface);border:var(--bw) solid var(--line);border-radius:var(--r-sm);padding:10px 12px}
+[data-opt=b] .tiles div{box-shadow:var(--shadow)}
+.tiles b{display:block;font-size:26px}
+[data-opt=b] .tiles b{font-size:20px}
+.tiles span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+
+/* ride mode */
+.turn{position:absolute;top:46px;left:12px;right:12px;display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:var(--r);background:var(--accent);color:var(--on-accent);z-index:4;box-shadow:var(--shadow)}
+[data-opt=b] .turn{background:var(--btn);color:var(--on-btn)}
+[data-opt=c][data-mode=light] .turn{background:var(--btn);color:var(--on-btn)}
+.turn .ico{width:34px;height:34px;stroke-width:2.5}
+.turn b{display:block;font-size:30px}
+[data-opt=b] .turn b{font-size:24px}
+.turn small{font-size:13px;opacity:.92}
+.hud{position:absolute;left:0;right:0;bottom:0;background:var(--surface);padding:14px 16px 20px;border-radius:var(--r) var(--r) 0 0;z-index:3;box-shadow:0 -10px 30px -12px rgba(0,0,0,.35)}
+[data-opt=c] .hud{border-top:3px solid var(--accent);box-shadow:none}
+.speed{display:flex;align-items:flex-end;gap:10px;margin-bottom:12px}
+.speed .big{font-size:68px;line-height:.82}
+[data-opt=b] .speed .big{font-size:52px}
+[data-opt=c] .speed .big{font-size:80px}
+.unit{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.speed .meta{margin-left:auto;text-align:right}
+.speed .meta b{display:block;font-size:24px}
+[data-opt=b] .speed .meta b{font-size:18px}
+.crew{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.rider{display:flex;align-items:center;gap:6px;background:var(--surface2);border-radius:999px;padding:3px 10px 3px 3px;font-size:12px;font-weight:600;white-space:nowrap}
+[data-opt=c] .rider{border-radius:3px}
+.rider .av{width:24px;height:24px;font-size:10px}
+.rider.warn{box-shadow:inset 0 0 0 1.5px var(--accent2);color:var(--accent2)}
+.sos{flex:0 0 92px!important;background:var(--danger);border-color:var(--danger);color:#fff;font-weight:800;letter-spacing:.08em}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Brodie: pick a UI direction</h1>
+  <p>Three directions, each shown on the same five screens with the same content. Switch between them and toggle light/dark. Colors come from the spec's brand tokens where they fit. Option C swaps in amber as its primary.</p>
+</header>
+<div class="controls">
+  <button class="opt" data-pick="a" aria-pressed="true"><b>A · Instrument Cluster</b><span>Dark-first, dashboard numbers, floating controls over a full-bleed map</span></button>
+  <button class="opt" data-pick="b" aria-pressed="false"><b>B · Daylight</b><span>Calm and minimal, soft cards, orange only where it matters</span></button>
+  <button class="opt" data-pick="c" aria-pressed="false"><b>C · Throttle</b><span>High-contrast and glove-friendly, oversized type and hit targets</span></button>
+  <div class="modes" role="group" aria-label="Theme"><button data-mode="dark" aria-pressed="true">Dark</button><button data-mode="light" aria-pressed="false">Light</button></div>
+</div>
+<div class="notes" id="notes"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="logo" viewBox="0 0 24 24"><path d="M12 2 21 21 12 16.5 3 21Z"/></symbol>
+<symbol id="i-map" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+<symbol id="i-bike" viewBox="0 0 24 24"><circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><path d="M5.5 17l4-7h5l4 7M9.5 10 8 6H5m9.5 4 1.5-4h3"/></symbol>
+<symbol id="i-nav" viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"/></symbol>
+<symbol id="i-turn" viewBox="0 0 24 24"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+<symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="map" viewBox="0 0 300 660">
+  <rect width="300" height="660" style="fill:var(--m-bg)"/>
+  <path d="M196 0H300V190C272 206 236 180 218 140C204 108 208 50 196 0Z" style="fill:var(--m-water)"/>
+  <rect x="22" y="300" width="84" height="64" rx="10" style="fill:var(--m-park)"/>
+  <rect x="190" y="420" width="96" height="70" rx="10" style="fill:var(--m-park)"/>
+  <path d="M-10 80H310M-10 210H310M-10 470H310M-10 590H310M50 -10V670M180 -10V670M260 -10V670" style="stroke:var(--m-road2);stroke-width:7;fill:none"/>
+  <path d="M120 -10V670M-10 280H310M-10 540C70 500 110 420 160 360S250 230 320 200" style="stroke:var(--m-road);stroke-width:13;fill:none;stroke-linecap:round"/>
+  <text x="126" y="150" transform="rotate(90 126 150)" style="fill:var(--m-label);font:600 8px Inter;letter-spacing:.08em">AGUINALDO HWY</text>
+  <text x="196" y="274" style="fill:var(--m-label);font:600 8px Inter;letter-spacing:.08em">TAGAYTAY RD</text>
+</symbol>
+</defs></svg>
+
+<div class="stage" id="stage" data-opt="a" data-mode="dark">
+
+<figure class="shot"><div class="phone"><div class="screen">
+  <div class="sb"></div>
+  <div class="hero"><svg viewBox="0 0 300 660" preserveAspectRatio="xMidYMin slice"><use href="#map"/><path class="route-case" d="M120 318V292Q120 280 132 280H168Q180 280 180 268V142"/><path class="route" d="M120 318V292Q120 280 132 280H168Q180 280 180 268V142"/></svg></div>
+  <div class="auth">
+    <div class="logo"><svg viewBox="0 0 24 24"><use href="#logo"/></svg></div>
+    <h2 class="h title">Ride together.</h2>
+    <p class="sub">Plan the route, roll out as a crew, and always know where everyone is.</p>
+    <div class="field"><svg class="ico"><use href="#i-mail"/></svg><span>alex@brodie.app</span></div>
+    <div class="field"><svg class="ico"><use href="#i-lock"/></svg><span>••••••••••</span><em>Forgot?</em></div>
+    <div class="btn">Sign in</div>
+    <p class="foot">New to Brodie? <b>Create an account</b></p>
+  </div>
+</div></div><figcaption>Sign in</figcaption></figure>
+
+<figure class="shot"><div class="phone"><div class="screen">
+  <svg class="map" viewBox="0 0 300 660" preserveAspectRatio="xMidYMid slice"><use href="#map"/>
+    <path class="route-case" d="M120 318V292Q120 280 132 280H168Q180 280 180 268V142"/><path class="route" d="M120 318V292Q120 280 132 280H168Q180 280 180 268V142"/>
+    <circle class="halo" cx="120" cy="318" r="22"/><circle class="me" cx="120" cy="318" r="8"/>
+    <path class="pin" d="M180 142c-8-10-13-16-13-23a13 13 0 0 1 26 0c0 7-5 13-13 23z"/><circle cx="180" cy="119" r="4.5" style="fill:var(--bg)"/>
+  </svg>
+  <div class="sb"></div>
+  <div class="search"><svg class="ico"><use href="#i-search"/></svg><span>Where to?</span><div class="av">A</div></div>
+  <div class="sheet"><div class="grab"></div>
+    <div class="dest"><div><div class="h dname">Tagaytay Ridge</div><div class="muted">Aguinaldo Hwy · Cavite</div></div><div class="x"><svg class="ico"><use href="#i-x"/></svg></div></div>
+    <div class="stats"><div><b class="h">64.2</b><span>km</span></div><div><b class="h">1:28</b><span>hrs</span></div><div><b class="h">10:42</b><span>arrive</span></div></div>
+    <div class="row"><div class="btn ghost"><svg class="ico"><use href="#i-users"/></svg>Group</div><div class="btn"><svg class="ico"><use href="#i-nav"/></svg>Ride solo</div></div>
+  </div>
+  <nav class="nav" data-on="0"></nav>
+</div></div><figcaption>Map · route preview</figcaption></figure>
+
+<figure class="shot"><div class="phone"><div class="screen">
+  <div class="sb"></div>
+  <div class="top">
+    <div class="ttl"><h2 class="h">Groups</h2><div class="iconbtn"><svg class="ico"><use href="#i-bell"/></svg><span class="badge">2</span></div></div>
+    <div class="card hot">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span class="live">Riding now</span><span class="muted">Lead: @migs</span></div>
+      <div class="h" style="font-size:24px;margin:8px 0 2px">Sunday Tagaytay Run</div>
+      <div class="muted">4 riders · 38 km to go</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px"><div class="stack"><div class="av">A</div><div class="av c2">M</div><div class="av c3">J</div><div class="av c4">R</div></div><div class="btn" style="height:40px;padding:0 18px;font-size:14px">Rejoin</div></div>
+    </div>
+    <div class="card" style="display:flex;align-items:center;gap:12px"><div class="tile"><svg class="ico"><use href="#i-mail"/></svg></div><div style="flex:1"><b>2 invites</b><div class="muted">Weekend Warriors, Night Owls</div></div><svg class="ico chev"><use href="#i-chev"/></svg></div>
+    <div class="label">Your groups</div>
+    <div class="list">
+      <div class="li"><div class="av c2">W</div><div>Weekend Warriors<small>8 riders · last ride Sat</small></div><svg class="ico chev"><use href="#i-chev"/></svg></div>
+      <div class="li"><div class="av c3">O</div><div>Office Commute<small>3 riders · last ride Fri</small></div><svg class="ico chev"><use href="#i-chev"/></svg></div>
+    </div>
+    <div class="btn" style="margin-top:14px"><svg class="ico"><use href="#i-plus"/></svg>New group ride</div>
+  </div>
+  <nav class="nav" data-on="1"></nav>
+</div></div><figcaption>Groups</figcaption></figure>
+
+<figure class="shot"><div class="phone"><div class="screen">
+  <svg class="map" viewBox="0 0 300 660" preserveAspectRatio="xMidYMid slice"><use href="#map"/>
+    <path class="route-case" d="M120 470V292Q120 280 132 280H168Q180 280 180 268V120"/><path class="route" d="M120 470V292Q120 280 132 280H168Q180 280 180 268V120"/>
+    <g style="font:700 11px Inter" text-anchor="middle">
+      <circle cx="120" cy="428" r="13" style="fill:#A855F7;stroke:var(--accent2);stroke-width:3"/><text x="120" y="432" fill="#fff">R</text>
+      <circle cx="120" cy="320" r="13" style="fill:#10B981;stroke:var(--bg);stroke-width:3"/><text x="120" y="324" fill="#fff">J</text>
+      <circle cx="160" cy="280" r="13" style="fill:#3B82F6;stroke:var(--bg);stroke-width:3"/><text x="160" y="284" fill="#fff">M</text>
+    </g>
+    <circle class="halo" cx="120" cy="378" r="24"/><circle class="me" cx="120" cy="378" r="9"/>
+  </svg>
+  <div class="sb"></div>
+  <div class="turn"><svg class="ico"><use href="#i-turn"/></svg><div><b class="h">400 m</b><small>Turn right onto Tagaytay Rd</small></div></div>
+  <div class="hud">
+    <div class="speed"><b class="h big">62</b><span class="unit">km/h</span><div class="meta"><b class="h">38.4 km</b><span class="unit">ETA 10:42</span></div></div>
+    <div class="crew"><span class="rider"><span class="av c2">M</span>Migs · lead</span><span class="rider"><span class="av c3">J</span>Jo</span><span class="rider warn"><span class="av c4">R</span>Rae · 1.2 km back</span></div>
+    <div class="row"><div class="btn sos">SOS</div><div class="btn ghost">End ride</div></div>
+  </div>
+</div></div><figcaption>Group ride · ride mode (nav hidden)</figcaption></figure>
+
+<figure class="shot"><div class="phone"><div class="screen">
+  <div class="sb"></div>
+  <div class="top">
+    <div class="ttl"><h2 class="h">Profile</h2><div class="iconbtn"><svg class="ico"><use href="#i-gear"/></svg></div></div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px"><div class="av" style="width:60px;height:60px;font-size:24px">A</div><div><div class="h" style="font-size:24px;text-transform:none">@alex_rides</div><div class="muted">alex@brodie.app</div></div></div>
+    <div class="tiles"><div><b class="h">1,284</b><span>km ridden</span></div><div><b class="h">37</b><span>rides</span></div><div><b class="h">5</b><span>groups</span></div></div>
+    <div class="label">Garage &amp; safety</div>
+    <div class="list">
+      <div class="li"><div class="tile"><svg class="ico"><use href="#i-bike"/></svg></div><div>Vehicles<small>Honda ADV 160 · +1 more</small></div><svg class="ico chev"><use href="#i-chev"/></svg></div>
+      <div class="li"><div class="tile"><svg class="ico"><use href="#i-shield"/></svg></div><div>Emergency contacts<small>2 contacts</small></div><svg class="ico chev"><use href="#i-chev"/></svg></div>
+    </div>
+    <div class="label">App</div>
+    <div class="list">
+      <div class="li"><div class="tile"><svg class="ico"><use href="#i-gear"/></svg></div><div>Settings<small>Theme, units, location</small></div><svg class="ico chev"><use href="#i-chev"/></svg></div>
+      <div class="li"><div class="tile" style="color:var(--danger)"><svg class="ico"><use href="#i-out"/></svg></div><div style="color:var(--danger)">Sign out</div></div>
+    </div>
+  </div>
+  <nav class="nav" data-on="3"></nav>
+</div></div><figcaption>Profile</figcaption></figure>
+
+</div>
+<script>
+document.querySelectorAll('.sb').forEach(e => e.innerHTML = '9:41<i><b></b><b></b></i>');
+const tabs = [['i-map', 'Map'], ['i-users', 'Groups'], ['i-clock', 'History'], ['i-user', 'Profile']];
+document.querySelectorAll('nav.nav').forEach(n => {
+  n.innerHTML = tabs.map(([icon, label], i) =>
+    `<a class="${i == n.dataset.on ? 'on' : ''}"><svg class="ico"><use href="#${icon}"/></svg><span>${label}</span></a>`).join('');
+});
+const notes = {
+  a: [['Feel', 'Night-ride instrument cluster. Full-bleed map, floating pill nav, glass panels.'],
+      ['Type', 'Rajdhani for numbers and titles, Inter for everything else (as in the spec).'],
+      ['Strengths', 'Closest to the existing spec and brand. Numbers you can read at a glance while riding at night.'],
+      ['Trade-off', 'Floating panels cover more of the map. Blur effects cost GPU time on low-end Android.']],
+  b: [['Feel', 'Calm everyday app. Soft cards, pill buttons, black primary actions. Orange only for route and active state.'],
+      ['Type', 'Inter everywhere, tight headings, no display font.'],
+      ['Strengths', 'Most familiar and easiest to build on stock Material 3 widgets. Ages well.'],
+      ['Trade-off', 'Least distinctive. Light-first, so the dark variant needs care for night rides.']],
+  c: [['Feel', 'Motorsport poster. Hard edges, amber on black, condensed uppercase type.'],
+      ['Type', 'Barlow Condensed for titles, numbers and buttons, Inter for body text.'],
+      ['Strengths', 'Largest hit targets (60px buttons) and highest contrast. Best with gloves and in direct sun.'],
+      ['Trade-off', 'Loud, and uppercase makes long text harder to read. Replaces the spec\'s orange with amber as primary.']],
+};
+const defaults = { a: 'dark', b: 'light', c: 'dark' };
+const stage = document.getElementById('stage');
+let opt = 'a', mode = null;
+// Deep link to a combination, e.g. ui-options.html#c-light
+const [hashOpt, hashMode] = location.hash.slice(1).split('-');
+if (hashOpt in defaults) opt = hashOpt;
+if (hashMode === 'dark' || hashMode === 'light') mode = hashMode;
+function render() {
+  const m = mode || defaults[opt];
+  stage.dataset.opt = opt;
+  stage.dataset.mode = m;
+  document.querySelectorAll('[data-pick]').forEach(b => b.setAttribute('aria-pressed', b.dataset.pick === opt));
+  document.querySelectorAll('.modes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === m));
+  document.getElementById('notes').innerHTML = notes[opt].map(([t, d]) => `<div><strong>${t}</strong>${d}</div>`).join('');
+}
+document.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => { opt = b.dataset.pick; render(); });
+document.querySelectorAll('.modes button').forEach(b => b.onclick = () => { mode = b.dataset.mode; render(); });
+render();
+</script>
+</div>
+</body>
+</html>
