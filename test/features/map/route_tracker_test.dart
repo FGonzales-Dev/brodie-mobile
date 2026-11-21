@@ -35,6 +35,12 @@ void main() {
     expect(progress.arrived, isFalse);
   });
 
+  test('reports how much of the route is behind the rider', () {
+    expect(progressAt(start).fractionRidden, closeTo(0, 0.001));
+    expect(progressAt(east(corner, 500)).fractionRidden, closeTo(0.75, 0.001));
+    expect(progressAt(end).fractionRidden, closeTo(1, 0.001));
+  });
+
   test('shows the next turn and how far it is', () {
     final progress = progressAt(north(start, 200));
 

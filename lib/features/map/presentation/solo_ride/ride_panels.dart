@@ -80,12 +80,16 @@ class ManeuverBanner extends ConsumerWidget {
   static String _distanceLabel(Measurement distance) => '${distance.value} ${distance.unit}';
 }
 
-/// Speed, distance left and arrival time, with the End button.
+/// Speed, distance left and arrival time, with the Reroute and End buttons.
 class RideHud extends ConsumerWidget {
-  const RideHud({super.key, required this.ride, required this.onEnd});
+  const RideHud({super.key, required this.ride, required this.onEnd, required this.onReroute});
+
+  /// Farther than this from the route, Reroute is highlighted.
+  static const offRouteMeters = 100.0;
 
   final SoloRideState ride;
   final VoidCallback onEnd;
+  final VoidCallback onReroute;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -94,6 +98,7 @@ class RideHud extends ConsumerWidget {
     final speed = formatSpeed(ride.lastFix?.speedMps ?? 0, units);
     final remaining = formatDistance(progress?.distanceRemainingMeters ?? ride.route.distanceMeters, units);
     final arrival = progress == null ? '--' : _clockAt(context, DateTime.now().add(progress.timeRemaining));
+    final offRoute = (progress?.distanceFromRouteMeters ?? 0) > offRouteMeters;
 
     return _BottomPanel(
       children: [
@@ -107,7 +112,22 @@ class RideHud extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: BrodieSpace.sm),
-        BrodieButton.secondary(label: 'End ride', icon: Icons.stop, onPressed: onEnd),
+        Row(
+          children: [
+            Expanded(
+              child: BrodieButton(
+                label: 'Reroute',
+                icon: Icons.alt_route,
+                variant: offRoute ? BrodieButtonVariant.primary : BrodieButtonVariant.secondary,
+                isLoading: ride.rerouting,
+                // Needs a position to route from.
+                onPressed: ride.lastFix == null ? null : onReroute,
+              ),
+            ),
+            const SizedBox(width: BrodieSpace.sm),
+            Expanded(child: BrodieButton.secondary(label: 'End ride', icon: Icons.stop, onPressed: onEnd)),
+          ],
+        ),
       ],
     );
   }

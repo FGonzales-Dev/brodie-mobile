@@ -122,8 +122,16 @@ class _GroupTile extends StatelessWidget {
     return BrodieListTile(
       leading: BrodieAvatar(name: group.name),
       title: group.name,
-      subtitle: '${countLabel(group.memberCount, 'rider')} · code ${group.inviteCode}',
-      onTap: () => context.push(Routes.groupInvite(group.id)),
+      subtitle: [
+        countLabel(group.memberCount, 'rider'),
+        ?switch (group.openTripStatus) {
+          TripStatus.planned => 'Ride planned',
+          TripStatus.active => 'Riding now',
+          _ => null,
+        },
+        'code ${group.inviteCode}',
+      ].join(' · '),
+      onTap: () => context.push(Routes.group(group.id)),
     );
   }
 }

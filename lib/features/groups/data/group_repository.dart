@@ -1,8 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/di/core_providers.dart';
 import '../../../core/errors/guard_remote.dart';
+import '../../group_ride/domain/group_ride_models.dart';
+import '../../map/domain/map_models.dart';
+import '../../map/domain/polyline_codec.dart';
 import '../domain/group_models.dart';
 
 part 'group_repository.g.dart';
@@ -35,24 +39,40 @@ class GroupRepository {
 
   Future<void> declineInvite(String groupId) => _rpc('decline_group_invite', {'target_group_id': groupId});
 
-  Future<GroupTrip> createTrip({
-    required String groupId,
-    required double destinationLatitude,
-    required double destinationLongitude,
-    String? name,
-  }) async {
-    final rows = await _rpcList('create_group_trip', _tripFromRow, {
+  /// Leader only. Fails while the group already has a trip open.
+  Future<void> planTrip({required String groupId, required Place destination, required RouteResult route}) {
+    return _rpc('plan_group_trip', {
       'target_group_id': groupId,
-      'destination_lng': destinationLongitude,
-      'destination_lat': destinationLatitude,
-      'trip_name': name,
+      'destination_lng': destination.location.longitude,
+      'destination_lat': destination.location.latitude,
+      'route_polyline6': route.encodedPolyline,
+      'route_distance_m': route.distanceMeters,
+      'route_duration_s': route.duration.inSeconds,
+      'trip_name': destination.name,
     });
-    return rows.first;
   }
 
-  Future<List<GroupTrip>> fetchTrips(String groupId) {
-    return _rpcList('get_group_trips', _tripFromRow, {'target_group_id': groupId});
+  /// The group's planned or active trip, or null.
+  Future<GroupTrip?> fetchOpenTrip(String groupId) async {
+    final trips = await _rpcList('get_open_group_trip', tripFromRow, {'target_group_id': groupId});
+    return trips.firstOrNull;
   }
+
+  /// Riders who have joined [tripId], by seat.
+  Future<List<TripRider>> fetchTripRiders(String tripId) {
+    return _rpcList('get_trip_riders', _riderFromRow, {'target_trip_id': tripId});
+  }
+
+  /// Joining again after leaving keeps the same seat.
+  Future<void> joinTrip(String tripId) => _rpc('join_group_trip', {'target_trip_id': tripId});
+
+  Future<void> leaveTrip(String tripId) => _rpc('leave_group_trip', {'target_trip_id': tripId});
+
+  /// Leader only.
+  Future<void> startTrip(String tripId) => _rpc('start_group_trip', {'target_trip_id': tripId});
+
+  /// Leader only.
+  Future<void> cancelTrip(String tripId) => _rpc('cancel_group_trip', {'target_trip_id': tripId});
 
   Future<void> _rpc(String function, Map<String, dynamic> params) {
     return guardRemote(() => _client.rpc(function, params: params));
@@ -76,6 +96,10 @@ class GroupRepository {
         leaderId: row['leader_id'] as String,
         createdAt: DateTime.parse(row['created_at'] as String),
         memberCount: (row['member_count'] as num?)?.toInt() ?? 1,
+        openTripStatus: switch (row['open_trip_status']) {
+          final String status => TripStatus.values.byName(status),
+          _ => null,
+        },
       );
 
   static GroupMember _memberFromRow(Map<String, dynamic> row) => GroupMember(
@@ -99,14 +123,32 @@ class GroupRepository {
         invitedAt: DateTime.parse(row['invited_at'] as String),
       );
 
-  static GroupTrip _tripFromRow(Map<String, dynamic> row) => GroupTrip(
+  @visibleForTesting
+  static GroupTrip tripFromRow(Map<String, dynamic> row) => GroupTrip(
         id: row['id'] as String,
-        groupId: row['group_id'] as String?,
+        groupId: row['group_id'] as String,
+        leaderId: row['leader_id'] as String,
         name: row['name'] as String?,
+        destination: GeoPoint(
+          latitude: (row['destination_lat'] as num).toDouble(),
+          longitude: (row['destination_lng'] as num).toDouble(),
+        ),
         status: TripStatus.values.byName(row['status'] as String),
+        route: TripRoute(
+          version: (row['route_version'] as num).toInt(),
+          path: PolylineCodec.decode(row['route_polyline6'] as String),
+          distanceMeters: (row['distance_m'] as num).toDouble(),
+          duration: Duration(seconds: (row['duration_s'] as num).toInt()),
+        ),
         createdAt: DateTime.parse(row['created_at'] as String),
         startedAt: _parseOptionalDate(row['started_at']),
-        endedAt: _parseOptionalDate(row['ended_at']),
+      );
+
+  static TripRider _riderFromRow(Map<String, dynamic> row) => TripRider(
+        userId: row['user_id'] as String,
+        username: row['username'] as String?,
+        seat: (row['seat'] as num).toInt(),
+        isLeader: row['is_leader'] as bool,
       );
 
   static DateTime? _parseOptionalDate(Object? value) => value == null ? null : DateTime.parse(value as String);

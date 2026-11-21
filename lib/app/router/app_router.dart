@@ -8,6 +8,7 @@ import '../../features/auth/presentation/sign_in_screen.dart';
 import '../../features/auth/presentation/sign_up_screen.dart';
 import '../../features/emergency_contacts/presentation/emergency_contacts_screen.dart';
 import '../../features/groups/presentation/create_group_screen.dart';
+import '../../features/groups/presentation/group_screen.dart';
 import '../../features/groups/presentation/groups_screen.dart';
 import '../../features/groups/presentation/invite_screen.dart';
 import '../../features/groups/presentation/pending_invites_screen.dart';
@@ -57,6 +58,11 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(path: Routes.createGroup, builder: (_, _) => const CreateGroupScreen()),
       GoRoute(path: Routes.pendingInvites, builder: (_, _) => const PendingInvitesScreen()),
+      // After the fixed /groups/... paths above, which this pattern would also match.
+      GoRoute(
+        path: Routes.groupPattern,
+        builder: (_, state) => GroupScreen(groupId: state.pathParameters['groupId']!),
+      ),
       GoRoute(
         path: Routes.groupInvitePattern,
         builder: (_, state) => InviteScreen(groupId: state.pathParameters['groupId']!),

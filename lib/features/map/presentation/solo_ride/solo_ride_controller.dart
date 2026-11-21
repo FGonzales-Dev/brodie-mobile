@@ -10,7 +10,6 @@ import '../../application/my_location_providers.dart';
 import '../../data/directions_repository.dart';
 import '../../data/location_repository.dart';
 import '../../domain/map_models.dart';
-import '../../domain/off_route_detector.dart';
 import '../../domain/route_tracker.dart';
 import '../../domain/track_recorder.dart';
 import '../ride_planning_controller.dart';
@@ -42,8 +41,8 @@ abstract class SoloRideState with _$SoloRideState {
 }
 
 /// An active solo ride. It starts from the route the rider just previewed (no
-/// extra Directions request) and spends one only when the rider has really
-/// left the route (see [OffRouteDetector]).
+/// extra Directions request) and spends one only when the rider asks for a
+/// new route ([reroute]).
 @riverpod
 class SoloRideController extends _$SoloRideController {
   /// GPS updates during a ride: often enough for turn distances and speed.
@@ -55,7 +54,6 @@ class SoloRideController extends _$SoloRideController {
 
   late RouteTracker _tracker;
   final _track = TrackRecorder();
-  final _offRoute = OffRouteDetector();
   StreamSubscription<GeoFix>? _fixes;
 
   /// Null when there's no previewed route to ride (e.g. the app was
@@ -92,14 +90,6 @@ class SoloRideController extends _$SoloRideController {
       _fixes?.cancel();
     }
     state = next;
-
-    final offRoute = !progress.arrived &&
-        _offRoute.onFix(
-          distanceFromRoute: progress.distanceFromRouteMeters,
-          accuracyMeters: fix.accuracyMeters,
-          at: fix.timestamp,
-        );
-    if (offRoute) _reroute(from: fix.position);
   }
 
   /// Stops tracking and returns the ride to save, or null when it was too
@@ -128,18 +118,24 @@ class SoloRideController extends _$SoloRideController {
     );
   }
 
-  Future<void> _reroute({required GeoPoint from}) async {
-    final destination = state!.destination;
-    state = state?.copyWith(rerouting: true, notice: null);
+  /// A new route from where the rider is now. Each one is a billed
+  /// Directions request, so it happens only when the rider asks.
+  Future<void> reroute() async {
+    final current = state;
+    final from = current?.lastFix;
+    if (current == null || from == null || current.arrived || current.rerouting) return;
+
+    state = current.copyWith(rerouting: true, notice: null);
     try {
-      final route = await ref.read(directionsRepositoryProvider).fetchRoute(from: from, to: destination.location);
+      final destination = current.destination.location;
+      final route = await ref.read(directionsRepositoryProvider).fetchRoute(from: from.position, to: destination);
       if (!ref.mounted) return;
-      _tracker = RouteTracker(route, destination: destination.location);
-      _offRoute.rerouteFinished(DateTime.now(), succeeded: true);
-      state = state?.copyWith(route: route, rerouting: false);
+      _tracker = RouteTracker(route, destination: destination);
+      // Progress on the new route straight away, not after the next fix.
+      final latest = state?.lastFix ?? from;
+      state = state?.copyWith(route: route, progress: _tracker.progressAt(latest), rerouting: false);
     } catch (error) {
       if (!ref.mounted) return;
-      _offRoute.rerouteFinished(DateTime.now(), succeeded: false);
       state = state?.copyWith(rerouting: false, notice: AppFailure.messageFor(error));
     }
   }

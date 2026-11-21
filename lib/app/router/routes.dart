@@ -14,6 +14,8 @@ abstract final class Routes {
   static const groups = '/groups';
   static const createGroup = '/groups/create';
   static const pendingInvites = '/groups/invites';
+  static const groupPattern = '/groups/:groupId';
+  static String group(String groupId) => '/groups/$groupId';
   static const groupInvitePattern = '/groups/:groupId/invite';
   static String groupInvite(String groupId) => '/groups/$groupId/invite';
 

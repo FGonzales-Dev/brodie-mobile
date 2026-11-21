@@ -14,6 +14,7 @@ import '../../../../core/presentation/keep_screen_on.dart';
 import '../../../history/application/ride_providers.dart';
 import '../ride_planning_controller.dart';
 import '../widgets/map_ornaments.dart';
+import '../widgets/ride_route_line.dart';
 import '../widgets/route_layers.dart';
 import 'ride_panels.dart';
 import 'solo_ride_controller.dart';
@@ -36,13 +37,15 @@ class _SoloRideScreenState extends ConsumerState<SoloRideScreen> {
     pitch: 45,
   );
 
-  final _layers = RouteLayers();
+  final _routeLine = RideRouteLine();
+  MapboxMap? _map;
   final _ornaments = MapOrnaments();
   final _topPanel = GlobalKey();
   final _bottomPanel = GlobalKey();
   var _following = true;
 
   Future<void> _onMapCreated(MapboxMap map) async {
+    _map = map;
     // Place the camera on the rider now: until the map's own location puck
     // has a position, following it would leave the camera on the style's
     // default view (New York). Follow mode takes over once the puck moves.
@@ -59,21 +62,29 @@ class _SoloRideScreenState extends ConsumerState<SoloRideScreen> {
     await map.location.updateSettings(
       LocationComponentSettings(enabled: true, puckBearingEnabled: true, puckBearing: PuckBearing.COURSE),
     );
-    await _layers.attach(map);
     await _ornaments.attach(map);
     if (!mounted) return;
     _syncOrnaments();
+    // The style may have finished loading while the camera was being set.
+    if (await map.style.isStyleLoaded()) await _attachRoute();
+  }
+
+  /// Also runs on every later style switch (light/dark), which drops the
+  /// route layers.
+  void _onStyleLoaded(StyleLoadedEventData _) => _attachRoute();
+
+  Future<void> _attachRoute() async {
+    final map = _map;
+    if (map == null || !mounted) return;
+    await _routeLine.attach(map, colors: context.colors);
     await _drawRoute();
   }
 
-  Future<void> _drawRoute() {
+  Future<void> _drawRoute() async {
     final ride = ref.read(soloRideControllerProvider);
-    return _layers.show(
-      colors: context.colors,
-      path: ride?.route.path,
-      pin: ride?.destination.location,
-      lineWidth: 8,
-    );
+    if (ride == null) return;
+    await _routeLine.show(path: ride.route.path, destination: ride.destination.location);
+    await _routeLine.trimTo(ride.progress?.fractionRidden ?? 0);
   }
 
   /// Moves Mapbox's logo, attribution and compass clear of the panels.
@@ -124,6 +135,9 @@ class _SoloRideScreenState extends ConsumerState<SoloRideScreen> {
     ref.listen(soloRideControllerProvider.select((ride) => ride?.route), (previous, next) {
       if (previous != null && next != previous) _drawRoute();
     });
+    ref.listen(soloRideControllerProvider.select((ride) => ride?.progress?.fractionRidden), (_, ridden) {
+      if (ridden != null) _routeLine.trimTo(ridden);
+    });
     ref.listen(soloRideControllerProvider.select((ride) => ride?.arrived ?? false), (wasArrived, arrived) {
       if (arrived && wasArrived == false) HapticFeedback.heavyImpact();
     });
@@ -161,6 +175,7 @@ class _SoloRideScreenState extends ConsumerState<SoloRideScreen> {
                 styleUri: isDark ? MapboxStyles.DARK : MapboxStyles.LIGHT,
                 viewport: _following ? _followRider : const IdleViewportState(),
                 onMapCreated: _onMapCreated,
+                onStyleLoadedListener: _onStyleLoaded,
                 onScrollListener: (_) => _stopFollowing(),
                 onZoomListener: (_) => _stopFollowing(),
               ),
@@ -199,7 +214,11 @@ class _SoloRideScreenState extends ConsumerState<SoloRideScreen> {
                     if (ride.arrived)
                       ArrivalPanel(ride: ride, onDone: _endRide)
                     else
-                      RideHud(ride: ride, onEnd: _confirmEnd),
+                      RideHud(
+                        ride: ride,
+                        onEnd: _confirmEnd,
+                        onReroute: ref.read(soloRideControllerProvider.notifier).reroute,
+                      ),
                   ],
                 ),
               ),

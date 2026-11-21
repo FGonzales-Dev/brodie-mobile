@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/design_system/design_system.dart';
 import '../../../core/presentation/feedback.dart';
+import '../../map/presentation/widgets/route_overview_map.dart';
 import '../../vehicles/domain/vehicle.dart';
 import '../../vehicles/presentation/vehicles_screen.dart';
 import '../application/ride_providers.dart';
@@ -54,7 +55,7 @@ class RideDetailScreen extends ConsumerWidget {
         onRetry: () => ref.invalidate(rideDetailProvider(rideId)),
         data: (ride) => ListView(
           children: [
-            if (ride.path.length >= 2) SizedBox(height: 260, child: RideRouteMap(path: ride.path)),
+            if (ride.path.length >= 2) SizedBox(height: 260, child: RouteOverviewMap(path: ride.path)),
             Padding(
               padding: const EdgeInsets.all(BrodieSpace.md),
               child: Column(

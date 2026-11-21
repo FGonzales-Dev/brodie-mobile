@@ -6,6 +6,7 @@ import '../../../../app/router/routes.dart';
 import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../../core/utils/units.dart';
+import '../../../groups/presentation/plan_group_ride_sheet.dart';
 import '../../../settings/application/settings_controller.dart';
 import '../../domain/map_models.dart';
 import '../ride_planning_controller.dart';
@@ -25,7 +26,10 @@ class RoutePreviewSheet extends ConsumerWidget {
     final (destination, body) = switch (state) {
       RidePlanIdle() => (null, const SizedBox.shrink()),
       RidePlanLoading(:final destination) => (destination, const _Loading()),
-      RidePlanPreview(:final destination, :final route) => (destination, _RouteStats(route: route)),
+      RidePlanPreview(:final destination, :final route) => (
+          destination,
+          _RouteStats(destination: destination, route: route),
+        ),
       RidePlanError(:final destination, :final error) => (
           destination,
           _RouteError(error: error, onRetry: controller.retry, onDismiss: controller.clear),
@@ -86,9 +90,17 @@ class _Loading extends StatelessWidget {
 }
 
 class _RouteStats extends ConsumerWidget {
-  const _RouteStats({required this.route});
+  const _RouteStats({required this.destination, required this.route});
 
+  final Place destination;
   final RouteResult route;
+
+  Future<void> _rideWithGroup(BuildContext context, WidgetRef ref) async {
+    final groupId = await planGroupRide(context, ref, destination: destination, route: route);
+    if (groupId == null || !context.mounted) return;
+    ref.read(ridePlanningControllerProvider.notifier).clear();
+    await context.push(Routes.group(groupId));
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -117,7 +129,7 @@ class _RouteStats extends ConsumerWidget {
               child: BrodieButton.secondary(
                 label: 'Group',
                 icon: Icons.groups_outlined,
-                onPressed: () => context.push(Routes.createGroup),
+                onPressed: () => _rideWithGroup(context, ref),
               ),
             ),
             const SizedBox(width: BrodieSpace.sm),

@@ -15,6 +15,9 @@ abstract class RideProgress with _$RideProgress {
     required Duration timeRemaining,
     required double distanceFromRouteMeters,
 
+    /// How much of the route lies behind the rider, from 0 to 1.
+    required double fractionRidden,
+
     /// The next instruction ahead, or null past the last one.
     RouteManeuver? nextManeuver,
     double? distanceToManeuverMeters,
@@ -58,6 +61,7 @@ class RouteTracker {
       distanceRemainingMeters: remaining,
       timeRemaining: Duration(seconds: (remaining * secondsPerMeter).round()),
       distanceFromRouteMeters: projection.distanceFromRoute,
+      fractionRidden: _geometry.lengthMeters == 0 ? 0 : projection.alongRoute / _geometry.lengthMeters,
       nextManeuver: next == -1 ? null : route.maneuvers[next],
       distanceToManeuverMeters: next == -1 ? null : math.max(0.0, _maneuverAlong[next] - projection.alongRoute),
       arrived: closeToDestination && fix.accuracyMeters <= _maxArrivalAccuracyMeters,
