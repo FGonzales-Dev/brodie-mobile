@@ -8,6 +8,9 @@ abstract final class Routes {
 
   static const map = '/map';
   static const destinationSearch = '/map/search';
+
+  /// Destination search for a group ride; counts as a group search in usage.
+  static const groupDestinationSearch = '/map/search?for=group';
   static const soloRide = '/ride/solo';
   static const rideSummaryPattern = '/ride/summary/:rideId';
   static String rideSummary(String rideId) => '/ride/summary/$rideId';

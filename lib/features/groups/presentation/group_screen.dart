@@ -43,7 +43,7 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
   }
 
   Future<void> _plan() async {
-    final destination = await context.push<Place>(Routes.destinationSearch);
+    final destination = await context.push<Place>(Routes.groupDestinationSearch);
     if (destination == null || !mounted) return;
     await _run(() => _lobby.planTo(destination), successMessage: 'Ride planned. Your group can join now.');
   }

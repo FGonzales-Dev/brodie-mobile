@@ -60,11 +60,13 @@ class _FakeLocation extends LocationRepository {
 
 class _FakeDirections implements DirectionsRepository {
   final requests = <(GeoPoint, GeoPoint)>[];
+  final purposes = <RoutePurpose>[];
   Object? failWith;
 
   @override
-  Future<RouteResult> fetchRoute({required GeoPoint from, required GeoPoint to}) async {
+  Future<RouteResult> fetchRoute({required GeoPoint from, required GeoPoint to, required RoutePurpose purpose}) async {
     requests.add((from, to));
+    purposes.add(purpose);
     if (failWith case final error?) throw error;
     return _routeFrom(from);
   }
@@ -194,6 +196,7 @@ void main() {
       async.flushMicrotasks();
 
       expect(directions.requests, [(north(_start, 300), _end)]);
+      expect(directions.purposes, [RoutePurpose.reroute]);
       final state = stateOf(container)!;
       expect(state.rerouting, isFalse);
       expect(state.route.path.first, north(_start, 300));

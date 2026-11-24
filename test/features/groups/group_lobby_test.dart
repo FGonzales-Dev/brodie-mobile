@@ -82,10 +82,12 @@ class _FixedLocation extends LocationRepository {
 
 class _FakeDirections implements DirectionsRepository {
   final requests = <(GeoPoint, GeoPoint)>[];
+  final purposes = <RoutePurpose>[];
 
   @override
-  Future<RouteResult> fetchRoute({required GeoPoint from, required GeoPoint to}) async {
+  Future<RouteResult> fetchRoute({required GeoPoint from, required GeoPoint to, required RoutePurpose purpose}) async {
     requests.add((from, to));
+    purposes.add(purpose);
     return _route;
   }
 
@@ -126,6 +128,7 @@ void main() {
     await container.read(groupLobbyControllerProvider('group-1').notifier).planTo(_tagaytay);
 
     expect(directions.requests, [(_start, _tagaytay.location)]);
+    expect(directions.purposes, [RoutePurpose.groupPlan]);
     expect(server.planned?.groupId, 'group-1');
     final lobby = container.read(groupLobbyControllerProvider('group-1')).value!;
     expect(lobby.trip.name, 'Tagaytay');

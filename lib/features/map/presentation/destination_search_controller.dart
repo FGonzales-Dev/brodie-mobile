@@ -21,7 +21,7 @@ class DestinationSearchController extends _$DestinationSearchController {
   final _debouncer = Debouncer(const Duration(milliseconds: 300));
 
   @override
-  Future<List<PlaceSuggestion>> build() {
+  Future<List<PlaceSuggestion>> build(SearchPurpose purpose) {
     ref.onDispose(_debouncer.cancel);
     return Future.value(const []);
   }
@@ -36,7 +36,9 @@ class DestinationSearchController extends _$DestinationSearchController {
     _debouncer.run(() async {
       state = const AsyncLoading();
       state = await AsyncValue.guard(
-        () => ref.read(placeSearchRepositoryProvider).suggest(trimmed, sessionToken: _sessionToken, near: _near()),
+        () => ref
+            .read(placeSearchRepositoryProvider)
+            .suggest(trimmed, sessionToken: _sessionToken, purpose: purpose, near: _near()),
       );
     });
   }
@@ -47,6 +49,6 @@ class DestinationSearchController extends _$DestinationSearchController {
       ref.read(myLocationControllerProvider).value?.position ?? ref.read(lastLocationStoreProvider).read();
 
   Future<Place> resolve(PlaceSuggestion suggestion) {
-    return ref.read(placeSearchRepositoryProvider).retrieve(suggestion, sessionToken: _sessionToken);
+    return ref.read(placeSearchRepositoryProvider).retrieve(suggestion, sessionToken: _sessionToken, purpose: purpose);
   }
 }

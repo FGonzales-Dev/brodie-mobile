@@ -21,6 +21,19 @@ class UsageRepository {
     return (rows as List).cast<Map<String, dynamic>>().map(usageFromRow).toList();
   });
 
+  /// The last [days] days' billed calls by purpose, all riders.
+  Future<List<ApiUsageByPurpose>> fetchUsageByPurpose({int days = 7}) => guardRemote(() async {
+    final rows = await _client.rpc('get_api_usage_by_purpose', params: {'p_days': days});
+    return (rows as List).cast<Map<String, dynamic>>().map(byPurposeFromRow).toList();
+  });
+
+  @visibleForTesting
+  static ApiUsageByPurpose byPurposeFromRow(Map<String, dynamic> row) => (
+    apiName: row['api_name'] as String,
+    purpose: row['purpose'] as String,
+    count: (row['call_count'] as num).toInt(),
+  );
+
   @visibleForTesting
   static ApiUsage usageFromRow(Map<String, dynamic> row) => ApiUsage(
     apiName: row['api_name'] as String,
@@ -38,3 +51,7 @@ UsageRepository usageRepository(Ref ref) => UsageRepository(ref.watch(supabaseCl
 
 @riverpod
 Future<List<ApiUsage>> myApiUsage(Ref ref) => ref.watch(usageRepositoryProvider).fetchMyUsage();
+
+/// Where the last week's billed calls went, for the Usage screen.
+@riverpod
+Future<List<ApiUsageByPurpose>> apiUsageByPurpose(Ref ref) => ref.watch(usageRepositoryProvider).fetchUsageByPurpose();

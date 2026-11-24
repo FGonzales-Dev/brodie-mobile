@@ -12,7 +12,9 @@ class UsageScreen extends ConsumerWidget {
   const UsageScreen({super.key});
 
   Future<void> _refresh(WidgetRef ref) async {
-    ref.invalidate(myApiUsageProvider);
+    ref
+      ..invalidate(myApiUsageProvider)
+      ..invalidate(apiUsageByPurposeProvider);
     await ref.read(myApiUsageProvider.future);
   }
 
@@ -29,6 +31,7 @@ class UsageScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(BrodieSpace.md),
             children: [
               for (final usage in usages) ...[_UsageCard(usage: usage), const SizedBox(height: BrodieSpace.sm)],
+              const _UsageByPurposeCard(),
               const _MapDisplayNote(),
             ],
           ),
@@ -94,6 +97,62 @@ class _UsageCard extends StatelessWidget {
               style: BrodieType.caption.copyWith(color: colors.warning),
             ),
           Text('Resets at $resetsAt', style: BrodieType.caption.copyWith(color: colors.textSecondary)),
+        ],
+      ),
+    );
+  }
+}
+
+/// What the last week's route requests and searches were for, across all
+/// riders: where usage could be cut. Hidden until there's something to show.
+class _UsageByPurposeCard extends ConsumerWidget {
+  const _UsageByPurposeCard();
+
+  static const _services = {'mapbox_directions': 'Route requests', 'mapbox_search': 'Place searches'};
+
+  static String _purposeLabel(String purpose) => switch (purpose) {
+    'ride_preview' => 'Solo route previews',
+    'reroute' => 'Reroutes during rides',
+    'group_plan' => 'Group rides planned',
+    'ride_destination' => 'Solo destinations',
+    'group_destination' => 'Group ride destinations',
+    _ => 'From older app versions',
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final usage = ref.watch(apiUsageByPurposeProvider).value ?? const [];
+    if (usage.isEmpty) return const SizedBox.shrink();
+
+    return BrodieCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('LAST 7 DAYS · ALL RIDERS', style: BrodieType.title.copyWith(color: colors.textPrimary)),
+          for (final MapEntry(key: apiName, value: label) in _services.entries)
+            if (usage.where((row) => row.apiName == apiName).toList() case final rows when rows.isNotEmpty) ...[
+              const SizedBox(height: BrodieSpace.sm),
+              Text(
+                '$label: ${rows.fold(0, (sum, row) => sum + row.count)}',
+                style: BrodieType.bodyStrong.copyWith(color: colors.textPrimary),
+              ),
+              for (final row in rows)
+                Padding(
+                  padding: const EdgeInsets.only(top: BrodieSpace.xxs),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _purposeLabel(row.purpose),
+                          style: BrodieType.body.copyWith(color: colors.textSecondary),
+                        ),
+                      ),
+                      Text('${row.count}', style: BrodieType.bodyStrong.copyWith(color: colors.textPrimary)),
+                    ],
+                  ),
+                ),
+            ],
         ],
       ),
     );

@@ -13,16 +13,33 @@ import '../helpers/geo.dart';
 class _CountingSearchRepository implements PlaceSearchRepository {
   final queries = <String>[];
   final nearPoints = <GeoPoint?>[];
+  final purposes = <SearchPurpose>[];
+  final sessions = <String>{};
 
   @override
-  Future<List<PlaceSuggestion>> suggest(String query, {required String sessionToken, GeoPoint? near}) async {
+  Future<List<PlaceSuggestion>> suggest(
+    String query, {
+    required String sessionToken,
+    required SearchPurpose purpose,
+    GeoPoint? near,
+  }) async {
     queries.add(query);
     nearPoints.add(near);
+    purposes.add(purpose);
+    sessions.add(sessionToken);
     return const [];
   }
 
   @override
-  Future<Place> retrieve(PlaceSuggestion suggestion, {required String sessionToken}) => throw UnimplementedError();
+  Future<Place> retrieve(
+    PlaceSuggestion suggestion, {
+    required String sessionToken,
+    required SearchPurpose purpose,
+  }) async {
+    purposes.add(purpose);
+    sessions.add(sessionToken);
+    return Place(name: suggestion.name, location: const GeoPoint(latitude: 14.1, longitude: 120.9));
+  }
 }
 
 /// The home map's last fetched position, fixed for the test.
@@ -37,6 +54,7 @@ class _FixedLocationController extends MyLocationController {
 
 void main() {
   late _CountingSearchRepository repository;
+  late ProviderContainer container;
   late DestinationSearchController controller;
 
   // Longer than the controller's 300 ms debounce.
@@ -48,7 +66,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     repository = _CountingSearchRepository();
-    final container = ProviderContainer(
+    container = ProviderContainer(
       overrides: [
         placeSearchRepositoryProvider.overrideWithValue(repository),
         sharedPreferencesProvider.overrideWithValue(prefs),
@@ -61,9 +79,12 @@ void main() {
     // The home map keeps its fetched position alive underneath the search screen.
     container.listen(myLocationControllerProvider, (_, _) {});
     // Keep the auto-disposed controller alive for the whole test.
-    final subscription = container.listen(destinationSearchControllerProvider, (_, _) {});
+    final subscription = container.listen(
+      destinationSearchControllerProvider(SearchPurpose.rideDestination),
+      (_, _) {},
+    );
     addTearDown(subscription.close);
-    controller = container.read(destinationSearchControllerProvider.notifier);
+    controller = container.read(destinationSearchControllerProvider(SearchPurpose.rideDestination).notifier);
   });
 
   test('does not call Mapbox for fewer than 3 characters', () async {
@@ -100,5 +121,24 @@ void main() {
     await pause();
 
     expect(repository.nearPoints, [riderPosition]);
+  });
+
+  test('says what the search is for, and keeps one session for suggest and pick', () async {
+    controller.search('jollibee');
+    await pause();
+    await controller.resolve(const PlaceSuggestion(id: 'p1', name: 'Jollibee'));
+    expect(repository.purposes, [SearchPurpose.rideDestination, SearchPurpose.rideDestination]);
+    expect(repository.sessions, hasLength(1));
+
+    // The group leader's search is counted separately.
+    final group = container.read(destinationSearchControllerProvider(SearchPurpose.groupDestination).notifier);
+    final subscription = container.listen(
+      destinationSearchControllerProvider(SearchPurpose.groupDestination),
+      (_, _) {},
+    );
+    addTearDown(subscription.close);
+    group.search('tagaytay');
+    await pause();
+    expect(repository.purposes.last, SearchPurpose.groupDestination);
   });
 }

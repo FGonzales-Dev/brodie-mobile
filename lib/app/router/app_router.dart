@@ -24,6 +24,7 @@ import '../../features/onboarding/data/onboarding_store.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/profile/application/my_profile_provider.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/map/data/place_search_repository.dart';
 import '../../features/map/domain/map_models.dart';
 import '../../features/settings/domain/legal_documents.dart';
 import '../../features/settings/presentation/info_screens.dart';
@@ -57,7 +58,14 @@ GoRouter router(Ref ref) {
       GoRoute(path: Routes.signUp, builder: (_, _) => const SignUpScreen()),
       GoRoute(path: Routes.chooseUsername, builder: (_, _) => const ChooseUsernameScreen()),
       GoRoute(path: Routes.welcome, builder: (_, _) => const OnboardingScreen()),
-      GoRoute(path: Routes.destinationSearch, builder: (_, _) => const DestinationSearchScreen()),
+      GoRoute(
+        path: Routes.destinationSearch,
+        builder: (_, state) => DestinationSearchScreen(
+          purpose: state.uri.queryParameters['for'] == 'group'
+              ? SearchPurpose.groupDestination
+              : SearchPurpose.rideDestination,
+        ),
+      ),
       GoRoute(path: Routes.soloRide, builder: (_, _) => const SoloRideScreen()),
       GoRoute(
         path: Routes.rideSummaryPattern,

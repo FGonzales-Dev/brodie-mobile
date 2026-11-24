@@ -42,7 +42,9 @@ class RidePlanningController extends _$RidePlanningController {
     state = RidePlanLoading(destination);
     try {
       final origin = await ref.read(locationRepositoryProvider).currentPosition();
-      final route = await ref.read(directionsRepositoryProvider).fetchRoute(from: origin, to: destination.location);
+      final route = await ref
+          .read(directionsRepositoryProvider)
+          .fetchRoute(from: origin, to: destination.location, purpose: RoutePurpose.ridePreview);
       if (ref.mounted) state = RidePlanPreview(destination, route);
     } catch (error) {
       if (ref.mounted) state = RidePlanError(destination, error);

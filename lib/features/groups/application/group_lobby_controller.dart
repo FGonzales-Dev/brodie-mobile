@@ -60,7 +60,9 @@ class GroupLobbyController extends _$GroupLobbyController {
   /// leader is now, which is where the group meets.
   Future<void> planTo(Place destination) async {
     final origin = await ref.read(locationRepositoryProvider).currentPosition();
-    final route = await ref.read(directionsRepositoryProvider).fetchRoute(from: origin, to: destination.location);
+    final route = await ref
+        .read(directionsRepositoryProvider)
+        .fetchRoute(from: origin, to: destination.location, purpose: RoutePurpose.groupPlan);
     await ref.read(groupRepositoryProvider).planTrip(groupId: groupId, destination: destination, route: route);
     await _reload();
   }

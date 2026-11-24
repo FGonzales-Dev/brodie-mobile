@@ -27,3 +27,7 @@ abstract class ApiUsage with _$ApiUsage {
   /// What actually stops the rider: whichever allowance runs out first.
   int get availableNow => math.min(remaining, allRidersRemaining);
 }
+
+/// How many billed calls one service made for one purpose over recent days,
+/// across all riders (e.g. 12 route requests for solo previews).
+typedef ApiUsageByPurpose = ({String apiName, String purpose, int count});

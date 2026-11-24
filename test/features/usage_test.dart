@@ -28,4 +28,13 @@ void main() {
     expect(usage.remaining, 0);
     expect(usage.allRidersRemaining, 0);
   });
+
+  test('reads get_api_usage_by_purpose rows', () {
+    final row = UsageRepository.byPurposeFromRow({
+      'api_name': 'mapbox_directions',
+      'purpose': 'reroute',
+      'call_count': 7,
+    });
+    expect(row, (apiName: 'mapbox_directions', purpose: 'reroute', count: 7));
+  });
 }

@@ -4,13 +4,16 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/design_system/design_system.dart';
 import '../../../core/presentation/feedback.dart';
+import '../data/place_search_repository.dart';
 import '../domain/map_models.dart';
 import 'destination_search_controller.dart';
 import 'recent_places_controller.dart';
 
 /// Pops the chosen [Place].
 class DestinationSearchScreen extends ConsumerStatefulWidget {
-  const DestinationSearchScreen({super.key});
+  const DestinationSearchScreen({super.key, this.purpose = SearchPurpose.rideDestination});
+
+  final SearchPurpose purpose;
 
   @override
   ConsumerState<DestinationSearchScreen> createState() => _DestinationSearchScreenState();
@@ -28,7 +31,7 @@ class _DestinationSearchScreenState extends ConsumerState<DestinationSearchScree
   Future<void> _select(PlaceSuggestion suggestion) async {
     Place? place;
     final resolved = await context.runWithFeedback(() async {
-      place = await ref.read(destinationSearchControllerProvider.notifier).resolve(suggestion);
+      place = await ref.read(destinationSearchControllerProvider(widget.purpose).notifier).resolve(suggestion);
     });
     if (resolved && mounted) _choose(place!);
   }
@@ -41,7 +44,7 @@ class _DestinationSearchScreenState extends ConsumerState<DestinationSearchScree
 
   @override
   Widget build(BuildContext context) {
-    final results = ref.watch(destinationSearchControllerProvider);
+    final results = ref.watch(destinationSearchControllerProvider(widget.purpose));
 
     return Scaffold(
       appBar: AppBar(
@@ -57,14 +60,14 @@ class _DestinationSearchScreenState extends ConsumerState<DestinationSearchScree
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
           ),
-          onChanged: ref.read(destinationSearchControllerProvider.notifier).search,
+          onChanged: ref.read(destinationSearchControllerProvider(widget.purpose).notifier).search,
         ),
       ),
       body: _query.text.trim().length < DestinationSearchController.minQueryLength
           ? _RecentPlaces(onSelect: _choose)
           : AsyncValueView(
               value: results,
-              onRetry: () => ref.read(destinationSearchControllerProvider.notifier).search(_query.text),
+              onRetry: () => ref.read(destinationSearchControllerProvider(widget.purpose).notifier).search(_query.text),
               data: (suggestions) => suggestions.isEmpty
                   ? const EmptyState(icon: Icons.wrong_location_outlined, title: 'No results')
                   : ListView(

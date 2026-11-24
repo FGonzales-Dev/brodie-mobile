@@ -155,7 +155,9 @@ class SoloRideController extends _$SoloRideController {
     state = current.copyWith(rerouting: true, notice: null);
     try {
       final destination = current.destination.location;
-      final route = await ref.read(directionsRepositoryProvider).fetchRoute(from: from.position, to: destination);
+      final route = await ref
+          .read(directionsRepositoryProvider)
+          .fetchRoute(from: from.position, to: destination, purpose: RoutePurpose.reroute);
       if (!ref.mounted) return;
       _tracker = RouteTracker(route, destination: destination);
       // Progress on the new route straight away, not after the next fix.
