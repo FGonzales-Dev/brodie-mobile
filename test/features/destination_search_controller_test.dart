@@ -16,6 +16,9 @@ class _CountingSearchRepository implements PlaceSearchRepository {
   final purposes = <SearchPurpose>[];
   final sessions = <String>{};
 
+  /// Makes the next suggest call fail once.
+  Object? failNext;
+
   @override
   Future<List<PlaceSuggestion>> suggest(
     String query, {
@@ -25,6 +28,10 @@ class _CountingSearchRepository implements PlaceSearchRepository {
   }) async {
     queries.add(query);
     nearPoints.add(near);
+    if (failNext case final error?) {
+      failNext = null;
+      throw error;
+    }
     purposes.add(purpose);
     sessions.add(sessionToken);
     return const [];
@@ -57,8 +64,9 @@ void main() {
   late ProviderContainer container;
   late DestinationSearchController controller;
 
-  // Longer than the controller's 300 ms debounce.
-  Future<void> pause() => Future<void>.delayed(const Duration(milliseconds: 400));
+  // Longer than the controller's typing pause.
+  Future<void> pause() =>
+      Future<void>.delayed(DestinationSearchController.typingPause + const Duration(milliseconds: 100));
 
   const riderPosition = GeoPoint(latitude: 14.5995, longitude: 120.9842);
 
@@ -140,5 +148,35 @@ void main() {
     group.search('tagaytay');
     await pause();
     expect(repository.purposes.last, SearchPurpose.groupDestination);
+  });
+
+  test('backspacing to an earlier query reuses its results without asking Mapbox', () async {
+    controller.search('tagaytay');
+    await pause();
+    controller.search('tagaytay city');
+    await pause();
+    controller.search('tagaytay');
+    await pause();
+
+    expect(repository.queries, ['tagaytay', 'tagaytay city']);
+  });
+
+  test('the same text again, or in other case or spacing, is not searched twice', () async {
+    controller.search('Tagaytay');
+    await pause();
+    controller.search('tagaytay  ');
+    await pause();
+
+    expect(repository.queries, ['Tagaytay']);
+  });
+
+  test('a failed search is asked again on retry, not served from memory', () async {
+    repository.failNext = Exception('offline');
+    controller.search('tagaytay');
+    await pause();
+    controller.retry('tagaytay');
+    await pause();
+
+    expect(repository.queries, ['tagaytay', 'tagaytay']);
   });
 }

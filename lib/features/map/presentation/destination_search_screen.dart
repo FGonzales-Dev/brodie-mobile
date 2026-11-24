@@ -67,7 +67,7 @@ class _DestinationSearchScreenState extends ConsumerState<DestinationSearchScree
           ? _RecentPlaces(onSelect: _choose)
           : AsyncValueView(
               value: results,
-              onRetry: () => ref.read(destinationSearchControllerProvider(widget.purpose).notifier).search(_query.text),
+              onRetry: () => ref.read(destinationSearchControllerProvider(widget.purpose).notifier).retry(_query.text),
               data: (suggestions) => suggestions.isEmpty
                   ? const EmptyState(icon: Icons.wrong_location_outlined, title: 'No results')
                   : ListView(
