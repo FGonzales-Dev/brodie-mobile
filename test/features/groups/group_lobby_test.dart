@@ -1,4 +1,6 @@
 import 'package:brodie/core/errors/app_failure.dart';
+import 'package:brodie/features/auth/application/session_providers.dart';
+import 'package:brodie/features/auth/domain/app_user.dart';
 import 'package:brodie/features/group_ride/domain/group_ride_models.dart';
 import 'package:brodie/features/groups/application/group_lobby_controller.dart';
 import 'package:brodie/features/groups/data/group_repository.dart';
@@ -108,6 +110,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         groupRepositoryProvider.overrideWithValue(server),
+        currentUserProvider.overrideWithValue(const AppUser(id: 'leader')),
         locationRepositoryProvider.overrideWithValue(_FixedLocation()),
         directionsRepositoryProvider.overrideWithValue(directions),
       ],
@@ -219,5 +222,18 @@ void main() {
       async.flushMicrotasks();
       expect(server.tripFetches, 4, reason: 'one refresh straight away');
     });
+  });
+
+  test('re-planning the same ride from the same spot reuses the route', () async {
+    final container = app();
+    final lobby = container.read(groupLobbyControllerProvider('group-1').notifier);
+    await container.read(groupLobbyControllerProvider('group-1').future);
+    await lobby.planTo(_tagaytay);
+    await lobby.cancel();
+
+    await lobby.planTo(_tagaytay);
+
+    expect(directions.requests, hasLength(1));
+    expect(server.planned?.route.encodedPolyline, _route.encodedPolyline);
   });
 }

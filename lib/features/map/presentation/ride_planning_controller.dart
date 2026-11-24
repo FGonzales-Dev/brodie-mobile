@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../application/route_cache.dart';
 import '../data/directions_repository.dart';
 import '../data/location_repository.dart';
 import '../domain/map_models.dart';
@@ -42,9 +43,7 @@ class RidePlanningController extends _$RidePlanningController {
     state = RidePlanLoading(destination);
     try {
       final origin = await ref.read(locationRepositoryProvider).currentPosition();
-      final route = await ref
-          .read(directionsRepositoryProvider)
-          .fetchRoute(from: origin, to: destination.location, purpose: RoutePurpose.ridePreview);
+      final route = await previewRoute(ref, from: origin, to: destination.location, purpose: RoutePurpose.ridePreview);
       if (ref.mounted) state = RidePlanPreview(destination, route);
     } catch (error) {
       if (ref.mounted) state = RidePlanError(destination, error);

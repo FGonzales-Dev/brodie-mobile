@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../group_ride/domain/group_ride_models.dart';
+import '../../map/application/route_cache.dart';
 import '../../map/data/directions_repository.dart';
 import '../../map/data/location_repository.dart';
 import '../../map/domain/map_models.dart';
@@ -60,9 +61,7 @@ class GroupLobbyController extends _$GroupLobbyController {
   /// leader is now, which is where the group meets.
   Future<void> planTo(Place destination) async {
     final origin = await ref.read(locationRepositoryProvider).currentPosition();
-    final route = await ref
-        .read(directionsRepositoryProvider)
-        .fetchRoute(from: origin, to: destination.location, purpose: RoutePurpose.groupPlan);
+    final route = await previewRoute(ref, from: origin, to: destination.location, purpose: RoutePurpose.groupPlan);
     await ref.read(groupRepositoryProvider).planTrip(groupId: groupId, destination: destination, route: route);
     await _reload();
   }
