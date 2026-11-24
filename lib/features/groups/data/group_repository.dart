@@ -6,6 +6,7 @@ import '../../../core/di/core_providers.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/guard_remote.dart';
 import '../../group_ride/domain/group_ride_models.dart';
+import '../../map/data/maneuver_json.dart';
 import '../../map/domain/map_models.dart';
 import '../../map/domain/polyline_codec.dart';
 import '../domain/group_models.dart';
@@ -74,8 +75,25 @@ class GroupRepository {
       'route_distance_m': route.distanceMeters,
       'route_duration_s': route.duration.inSeconds,
       'trip_name': destination.name,
+      'route_maneuvers': ManeuverJson.encodeAll(route.maneuvers),
     });
   }
+
+  /// Leader only, during the ride: replaces the group's route with [route]
+  /// and returns its new version, which riders pick up.
+  Future<int> rerouteTrip(String tripId, RouteResult route) => guardRemote(() async {
+    final version = await _client.rpc(
+      'reroute_group_trip',
+      params: {
+        'target_trip_id': tripId,
+        'route_polyline6': route.encodedPolyline,
+        'route_distance_m': route.distanceMeters,
+        'route_duration_s': route.duration.inSeconds,
+        'route_maneuvers': ManeuverJson.encodeAll(route.maneuvers),
+      },
+    );
+    return (version as num).toInt();
+  });
 
   /// The group's planned or active trip, or null.
   Future<GroupTrip?> fetchOpenTrip(String groupId) async {
@@ -203,6 +221,7 @@ class GroupRepository {
       path: PolylineCodec.decode(row['route_polyline6'] as String),
       distanceMeters: (row['distance_m'] as num).toDouble(),
       duration: Duration(seconds: (row['duration_s'] as num).toInt()),
+      maneuvers: ManeuverJson.decodeAll(row['maneuvers']),
     ),
     createdAt: DateTime.parse(row['created_at'] as String),
     startedAt: _parseOptionalDate(row['started_at']),

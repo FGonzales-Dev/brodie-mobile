@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/design_system/design_system.dart';
 import '../../../core/presentation/time_labels.dart';
 import '../../../core/utils/units.dart';
+import '../../map/domain/route_rejoin.dart';
 import '../../map/presentation/widgets/location_issue_banner.dart';
+import '../../map/presentation/widgets/maneuver_icon.dart';
 import '../../map/presentation/widgets/rejoin_route_alert.dart';
 import '../../map/presentation/widgets/ride_panel.dart';
 import '../../settings/application/settings_controller.dart';
@@ -54,6 +56,7 @@ class GroupRideBanner extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(subtitle, style: BrodieType.bodyStrong.copyWith(color: colors.onPrimaryAction, fontSize: 15)),
+                    if (!ride.ended) _NextTurn(ride: ride),
                   ],
                 ),
               ),
@@ -77,6 +80,42 @@ class GroupRideBanner extends StatelessWidget {
         if (ride.wasConnected && !ride.connected) const _OfflineNote(),
         if (behind.isNotEmpty) _BehindAlert(riders: behind),
       ],
+    );
+  }
+}
+
+/// The next turn on the group's route, under the ride's name: "200 m · Turn
+/// right onto Aguinaldo Highway". The directions came with the leader's
+/// route, so this costs no request.
+class _NextTurn extends ConsumerWidget {
+  const _NextTurn({required this.ride});
+
+  final GroupRideState ride;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progress = ride.progress;
+    final maneuver = progress?.nextManeuver;
+    final distance = progress?.distanceToManeuverMeters;
+    if (maneuver == null || distance == null) return const SizedBox.shrink();
+    final colors = context.colors;
+    final units = ref.watch(settingsControllerProvider.select((settings) => settings.units));
+    return Padding(
+      padding: const EdgeInsets.only(top: BrodieSpace.xs),
+      child: Row(
+        children: [
+          Icon(maneuverIcon(maneuver), size: 28, color: colors.onPrimaryAction),
+          const SizedBox(width: BrodieSpace.xs),
+          Expanded(
+            child: Text(
+              '${formatShortDistance(distance, units).text} · ${maneuver.instruction}',
+              style: BrodieType.bodyStrong.copyWith(color: colors.onPrimaryAction),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -252,12 +291,16 @@ class GroupRideHud extends ConsumerWidget {
     required this.busy,
     required this.onRiderTap,
     required this.onEndOrLeave,
+    required this.onRerouteGroup,
   });
 
   final GroupRideState ride;
   final bool busy;
   final ValueChanged<LiveRider> onRiderTap;
   final VoidCallback onEndOrLeave;
+
+  /// Leader only: a new route for everyone.
+  final VoidCallback onRerouteGroup;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -287,14 +330,34 @@ class GroupRideHud extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: BrodieSpace.sm),
-        ride.isLeader
-            ? BrodieButton.secondary(
-                label: 'End ride for everyone',
-                icon: Icons.stop,
-                isLoading: busy,
-                onPressed: onEndOrLeave,
-              )
-            : BrodieButton.secondary(label: 'Leave ride', icon: Icons.logout, isLoading: busy, onPressed: onEndOrLeave),
+        if (ride.isLeader)
+          Row(
+            children: [
+              Expanded(
+                child: BrodieButton(
+                  label: 'Reroute group',
+                  icon: Icons.alt_route,
+                  // Highlighted once the leader has stayed well off the route.
+                  variant: RouteRejoin.suggestReroute(farOffSince: ride.farOffRouteSince, now: DateTime.now())
+                      ? BrodieButtonVariant.primary
+                      : BrodieButtonVariant.secondary,
+                  isLoading: ride.rerouting,
+                  onPressed: ride.lastFix == null || busy ? null : onRerouteGroup,
+                ),
+              ),
+              const SizedBox(width: BrodieSpace.sm),
+              Expanded(
+                child: BrodieButton.secondary(
+                  label: 'End ride',
+                  icon: Icons.stop,
+                  isLoading: busy,
+                  onPressed: ride.rerouting ? null : onEndOrLeave,
+                ),
+              ),
+            ],
+          )
+        else
+          BrodieButton.secondary(label: 'Leave ride', icon: Icons.logout, isLoading: busy, onPressed: onEndOrLeave),
       ],
     );
   }

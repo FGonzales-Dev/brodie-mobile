@@ -11,11 +11,12 @@ import '../../groups/data/group_repository.dart';
 import '../../groups/domain/group_models.dart';
 import '../../history/domain/ride.dart';
 import '../../history/domain/ride_from_track.dart';
+import '../../map/data/directions_repository.dart';
 import '../../map/data/location_repository.dart';
 import '../../map/domain/location_health.dart';
 import '../../map/domain/map_models.dart';
-import '../../map/domain/polyline_codec.dart';
 import '../../map/domain/route_geometry.dart';
+import '../../map/domain/route_rejoin.dart';
 import '../../map/domain/route_tracker.dart';
 import '../../map/domain/track_recorder.dart';
 import '../../settings/application/settings_controller.dart';
@@ -98,6 +99,12 @@ abstract class GroupRideState with _$GroupRideState {
 
     /// When this rider sent an SOS that's still on; null otherwise.
     DateTime? mySosAt,
+
+    /// The leader is getting a new route for the group.
+    @Default(false) bool rerouting,
+
+    /// Since when this rider has been well off the route (see [RouteRejoin]).
+    DateTime? farOffRouteSince,
   }) = _GroupRideState;
 
   const GroupRideState._();
@@ -174,15 +181,7 @@ class GroupRideController extends _$GroupRideController {
     _tripStartedAt = trip.startedAt ?? now;
     final route = trip.route;
     _geometry = RouteGeometry(route.path);
-    _tracker = RouteTracker(
-      RouteResult(
-        path: route.path,
-        distanceMeters: route.distanceMeters,
-        duration: route.duration,
-        encodedPolyline: PolylineCodec.encode(route.path),
-      ),
-      destination: trip.destination,
-    );
+    _tracker = RouteTracker(route.toRouteResult(), destination: trip.destination);
     _policy = SendPolicy(_sendProfile());
     _setRoster(roster, mySeat: me.seat);
     _rosterRefreshedAt = now;
@@ -253,12 +252,14 @@ class GroupRideController extends _$GroupRideController {
     _track.add(fix);
     _alongBySeat[current.me.seat] = _geometry.project(fix.position).alongRoute;
     _maybeSend(fix, mySeat: current.me.seat);
+    final progress = _tracker.progressAt(fix);
     _emit(
       current.copyWith(
         lastFix: fix,
-        progress: _tracker.progressAt(fix),
+        progress: progress,
         distanceRiddenMeters: _track.distanceMeters,
         locationLost: null,
+        farOffRouteSince: RouteRejoin.farOffSince(progress, since: current.farOffRouteSince, now: _now()),
       ),
     );
   }
@@ -298,6 +299,8 @@ class GroupRideController extends _$GroupRideController {
         _emit(current);
       case RiderSosChanged(:final signal):
         _onRiderSos(signal, current);
+      case TripRouteChanged(:final version):
+        if (version > current.trip.route.version) unawaited(_checkTrip());
       case TripEndedByLeader():
         _finishRiding(GroupRideEnd.endedByLeader);
       case ChannelConnectionChanged(:final connected):
@@ -440,10 +443,68 @@ class GroupRideController extends _$GroupRideController {
         _finishRiding(GroupRideEnd.endedByLeader);
         return;
       }
+      final latest = state.value;
+      if (latest != null && !latest.ended && trip.route.version > latest.trip.route.version) {
+        _applyRoute(trip.route, latest);
+      }
       _rosterRefreshedAt = null;
       await _refreshRoster();
     } catch (_) {
       // No signal; try again next time.
+    }
+  }
+
+  /// Switches this phone to [route]: progress, positions along it and the
+  /// line on the map all follow the new route.
+  void _applyRoute(TripRoute route, GroupRideState current) {
+    _geometry = RouteGeometry(route.path);
+    _tracker = RouteTracker(route.toRouteResult(), destination: current.trip.destination);
+    final fix = current.lastFix;
+    if (fix != null) _alongBySeat[current.me.seat] = _geometry.project(fix.position).alongRoute;
+    for (final MapEntry(key: seat, value: rider) in _others.entries) {
+      if (rider.fix case final fix?) {
+        _alongBySeat[seat] = _geometry.project(GeoPoint(latitude: fix.latitude, longitude: fix.longitude)).alongRoute;
+      }
+    }
+    _emit(
+      current.copyWith(
+        trip: current.trip.copyWith(route: route),
+        progress: fix == null ? null : _tracker.progressAt(fix),
+        farOffRouteSince: null,
+      ),
+    );
+  }
+
+  /// Leader only: one new route for the whole group, from where the leader
+  /// is now to the same destination. One Directions request instead of one
+  /// per rider; everyone's phone switches to it. Throws when it fails.
+  Future<void> rerouteGroup() async {
+    final current = state.value;
+    final from = current?.lastFix;
+    if (current == null || from == null || current.ended || !current.isLeader || current.rerouting) return;
+    state = AsyncData(current.copyWith(rerouting: true));
+    try {
+      final route = await ref
+          .read(directionsRepositoryProvider)
+          .fetchRoute(from: from.position, to: current.trip.destination, purpose: RoutePurpose.reroute);
+      final version = await _repository.rerouteTrip(current.trip.id, route);
+      if (!ref.mounted) return;
+      final latest = state.value ?? current;
+      _applyRoute(
+        TripRoute(
+          version: version,
+          path: route.path,
+          distanceMeters: route.distanceMeters,
+          duration: route.duration,
+          maneuvers: route.maneuvers,
+        ),
+        latest,
+      );
+      // Riders who miss this pick the route up at their next trip check.
+      await _channel.announceRoute(version).catchError((Object _) {});
+    } finally {
+      final latest = state.value;
+      if (ref.mounted && latest != null) state = AsyncData(latest.copyWith(rerouting: false));
     }
   }
 

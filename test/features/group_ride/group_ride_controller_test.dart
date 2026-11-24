@@ -8,6 +8,7 @@ import 'package:brodie/features/group_ride/data/trip_channel.dart';
 import 'package:brodie/features/group_ride/domain/group_ride_models.dart';
 import 'package:brodie/features/groups/data/group_repository.dart';
 import 'package:brodie/features/groups/domain/group_models.dart';
+import 'package:brodie/features/map/data/directions_repository.dart';
 import 'package:brodie/features/map/data/location_repository.dart';
 import 'package:brodie/features/map/domain/location_health.dart';
 import 'package:brodie/features/map/domain/map_models.dart';
@@ -39,6 +40,15 @@ class _FakeGroups implements GroupRepository {
       path: [_start, north(_start, 5000), _destination],
       distanceMeters: 10000,
       duration: const Duration(minutes: 12),
+      maneuvers: [
+        RouteManeuver(instruction: 'Head north', type: 'depart', location: _start),
+        RouteManeuver(
+          instruction: 'Turn right onto Summit Road',
+          type: 'turn',
+          modifier: 'right',
+          location: north(_start, 5000),
+        ),
+      ],
     ),
     createdAt: _t0,
     startedAt: _t0,
@@ -59,6 +69,23 @@ class _FakeGroups implements GroupRepository {
   Future<void> completeTrip(String tripId) async => calls.add('complete');
 
   @override
+  Future<int> rerouteTrip(String tripId, RouteResult route) async {
+    calls.add('reroute');
+    final current = trip!;
+    final version = current.route.version + 1;
+    trip = current.copyWith(
+      route: TripRoute(
+        version: version,
+        path: route.path,
+        distanceMeters: route.distanceMeters,
+        duration: route.duration,
+        maneuvers: route.maneuvers,
+      ),
+    );
+    return version;
+  }
+
+  @override
   Future<void> leaveTrip(String tripId) async => calls.add('leave');
 
   @override
@@ -72,6 +99,7 @@ class _FakeChannel implements TripChannel {
   var announcedEnd = false;
   var closed = false;
   final sos = <SosSignal>[];
+  final routeVersions = <int>[];
 
   void receive(TripChannelEvent event) => _events.add(event);
 
@@ -91,7 +119,28 @@ class _FakeChannel implements TripChannel {
   Future<void> sendSos(SosSignal signal) async => sos.add(signal);
 
   @override
+  Future<void> announceRoute(int version) async => routeVersions.add(version);
+
+  @override
   Future<void> close() async => closed = true;
+}
+
+class _FakeDirections implements DirectionsRepository {
+  final requests = <({GeoPoint from, GeoPoint to, RoutePurpose purpose})>[];
+
+  @override
+  Future<RouteResult> fetchRoute({required GeoPoint from, required GeoPoint to, required RoutePurpose purpose}) async {
+    requests.add((from: from, to: to, purpose: purpose));
+    return RouteResult(
+      path: [from, to],
+      distanceMeters: 7000,
+      duration: const Duration(minutes: 9),
+      encodedPolyline: 'new',
+    );
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _FakeLocation extends LocationRepository {
@@ -126,12 +175,14 @@ void main() {
   late _FakeGroups server;
   late _FakeChannel channel;
   late _FakeLocation location;
+  late _FakeDirections directions;
 
   void reset() {
     SharedPreferences.setMockInitialValues({});
     server = _FakeGroups();
     channel = _FakeChannel();
     location = _FakeLocation();
+    directions = _FakeDirections();
   }
 
   setUp(reset);
@@ -149,6 +200,7 @@ void main() {
           currentUserProvider.overrideWithValue(AppUser(id: me)),
           groupRepositoryProvider.overrideWithValue(server),
           locationRepositoryProvider.overrideWithValue(location),
+          directionsRepositoryProvider.overrideWithValue(directions),
           tripChannelFactoryProvider.overrideWithValue((_) => channel),
           clockProvider.overrideWithValue(() => _t0.add(async.elapsed)),
         ],
@@ -479,6 +531,85 @@ void main() {
       location.fixes.add(fixAt(_start, _t0));
       async.flushMicrotasks();
       expect(controllerOf(container).rideToSave(), isNull);
+    });
+  });
+
+  group('the shared route', () {
+    test("every rider gets the next turn from the leader's saved directions", () {
+      ride('sam', (async, container) {
+        location.fixes.add(fixAt(north(_start, 4000), _t0));
+        async.flushMicrotasks();
+        final progress = stateOf(container)!.progress!;
+        expect(progress.nextManeuver?.instruction, 'Turn right onto Summit Road');
+        expect(progress.distanceToManeuverMeters, closeTo(1000, 10));
+        expect(directions.requests, isEmpty, reason: 'no request of their own');
+      });
+    });
+
+    test('the leader reroutes the group with one request, and tells everyone', () {
+      ride('lea', (async, container) {
+        location.fixes.add(fixAt(east(north(_start, 3000), 400), _t0));
+        async.flushMicrotasks();
+
+        controllerOf(container).rerouteGroup();
+        async.flushMicrotasks();
+
+        expect(directions.requests.single.purpose, RoutePurpose.reroute);
+        expect(directions.requests.single.from, east(north(_start, 3000), 400));
+        expect(directions.requests.single.to, _destination);
+        expect(server.calls, contains('reroute'));
+        final state = stateOf(container)!;
+        expect(state.trip.route.version, 2);
+        expect(state.trip.route.path.first, east(north(_start, 3000), 400));
+        expect(state.rerouting, isFalse);
+        expect(state.progress!.distanceFromRouteMeters, closeTo(0, 1), reason: 'on the new route');
+        expect(channel.routeVersions, [2]);
+      });
+    });
+
+    test('riders switch to the new route as soon as they hear about it', () {
+      ride('sam', (async, container) {
+        server.trip = server.trip!.copyWith(
+          route: TripRoute(
+            version: 2,
+            path: [north(_start, 100), _destination],
+            distanceMeters: 9900,
+            duration: Duration.zero,
+          ),
+        );
+        channel.receive(const TripRouteChanged(2));
+        async.flushMicrotasks();
+
+        final route = stateOf(container)!.trip.route;
+        expect(route.version, 2);
+        expect(route.path.first, north(_start, 100));
+      });
+    });
+
+    test('…or at their next trip check, if they missed the message', () {
+      ride('sam', (async, container) {
+        server.trip = server.trip!.copyWith(
+          route: TripRoute(
+            version: 2,
+            path: [north(_start, 100), _destination],
+            distanceMeters: 9900,
+            duration: Duration.zero,
+          ),
+        );
+        async.elapse(const Duration(seconds: 31));
+        expect(stateOf(container)!.trip.route.version, 2);
+      });
+    });
+
+    test('only the leader can reroute the group', () {
+      ride('sam', (async, container) {
+        location.fixes.add(fixAt(_start, _t0));
+        async.flushMicrotasks();
+        controllerOf(container).rerouteGroup();
+        async.flushMicrotasks();
+        expect(directions.requests, isEmpty);
+        expect(server.calls, isNot(contains('reroute')));
+      });
     });
   });
 }

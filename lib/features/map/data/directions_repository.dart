@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../domain/map_models.dart';
+import 'maneuver_json.dart';
 import '../domain/polyline_codec.dart';
 import 'mapbox_functions.dart';
 
@@ -52,18 +53,7 @@ class DirectionsRepository {
       distanceMeters: (json['distance_m'] as num).toDouble(),
       duration: Duration(seconds: (json['duration_s'] as num).round()),
       encodedPolyline: encoded,
-      maneuvers: [
-        for (final maneuver in (json['maneuvers'] as List? ?? const []).cast<Map<String, dynamic>>())
-          RouteManeuver(
-            instruction: maneuver['instruction'] as String,
-            type: maneuver['type'] as String,
-            modifier: maneuver['modifier'] as String?,
-            location: GeoPoint(
-              latitude: (maneuver['lat'] as num).toDouble(),
-              longitude: (maneuver['lng'] as num).toDouble(),
-            ),
-          ),
-      ],
+      maneuvers: ManeuverJson.decodeAll(json['maneuvers']),
     );
   }
 }

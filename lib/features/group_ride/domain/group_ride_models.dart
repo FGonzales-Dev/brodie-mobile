@@ -46,7 +46,22 @@ abstract class TripRoute with _$TripRoute {
     required List<GeoPoint> path,
     required double distanceMeters,
     required Duration duration,
+
+    /// Turn instructions, saved with the trip so riders don't each request
+    /// them. Empty for trips planned by older app versions.
+    @Default(<RouteManeuver>[]) List<RouteManeuver> maneuvers,
   }) = _TripRoute;
+
+  const TripRoute._();
+
+  /// The same route in the form the ride trackers use.
+  RouteResult toRouteResult() => RouteResult(
+    path: path,
+    distanceMeters: distanceMeters,
+    duration: duration,
+    encodedPolyline: '',
+    maneuvers: maneuvers,
+  );
 }
 
 /// How recently a rider was heard from, judged by when their last message

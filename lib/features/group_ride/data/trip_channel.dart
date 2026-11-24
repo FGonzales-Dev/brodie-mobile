@@ -34,6 +34,13 @@ class RiderSosChanged extends TripChannelEvent {
   final SosSignal signal;
 }
 
+/// The leader rerouted the group; the new route is version [version].
+class TripRouteChanged extends TripChannelEvent {
+  const TripRouteChanged(this.version);
+
+  final int version;
+}
+
 /// The leader ended the ride.
 class TripEndedByLeader extends TripChannelEvent {
   const TripEndedByLeader();
@@ -62,6 +69,10 @@ abstract interface class TripChannel {
   /// Tells everyone the leader ended the ride.
   Future<void> announceEnd();
 
+  /// Tells everyone the leader saved a new route, [version], so they fetch it
+  /// now rather than at their next trip check. Over REST, like [announceEnd].
+  Future<void> announceRoute(int version);
+
   /// Tells everyone this rider needs help, or is safe again. Always over
   /// REST too, so it goes out even when the connection is down.
   Future<void> sendSos(SosSignal signal);
@@ -75,6 +86,7 @@ class SupabaseTripChannel implements TripChannel {
   static const _fixEvent = 'pos';
   static const _endEvent = 'end';
   static const _sosEvent = 'sos';
+  static const _routeEvent = 'route';
 
   final SupabaseClient _client;
   final String tripId;
@@ -98,6 +110,7 @@ class SupabaseTripChannel implements TripChannel {
         .onBroadcast(event: _fixEvent, callback: _onFix)
         .onBroadcast(event: _endEvent, callback: (_) => _emit(const TripEndedByLeader()))
         .onBroadcast(event: _sosEvent, callback: _onSos)
+        .onBroadcast(event: _routeEvent, callback: _onRoute)
         .onPresenceSync((_) => _emit(OnlineSeatsChanged(_onlineSeats(channel))))
         .subscribe((status, error) async {
           switch (status) {
@@ -123,6 +136,11 @@ class SupabaseTripChannel implements TripChannel {
     if (payload is! Map) return;
     final fix = PositionCodec.decode(Map<String, dynamic>.from(payload));
     if (fix != null) _emit(RiderFixReceived(fix));
+  }
+
+  void _onRoute(Map<String, dynamic> message) {
+    final payload = message['payload'];
+    if (payload is Map && payload['v'] is int) _emit(TripRouteChanged(payload['v'] as int));
   }
 
   void _onSos(Map<String, dynamic> message) {
@@ -155,6 +173,13 @@ class SupabaseTripChannel implements TripChannel {
     if (channel == null) return;
     // REST, so it goes out even if the connection just dropped.
     await channel.httpSend(event: _endEvent, payload: const <String, dynamic>{});
+  }
+
+  @override
+  Future<void> announceRoute(int version) async {
+    final channel = _channel;
+    if (channel == null) return;
+    await channel.httpSend(event: _routeEvent, payload: {'v': version});
   }
 
   @override

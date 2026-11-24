@@ -177,6 +177,16 @@ class _GroupRideScreenState extends ConsumerState<GroupRideScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // A new route (the leader rerouted): redraw it, and tell riders why.
+    ref.listen(_provider.select((ride) => ride.value?.trip.route.version), (before, after) {
+      final ride = _ride;
+      if (before == null || after == null || after <= before || ride == null) return;
+      _routeLine.show(path: ride.trip.route.path, destination: ride.trip.destination);
+      if (!ride.isLeader) {
+        HapticFeedback.heavyImpact();
+        context.showMessage('Your leader changed the route');
+      }
+    });
     ref.listen(_provider.select((ride) => ride.value?.progress?.fractionRidden), (_, ridden) {
       if (ridden != null) _routeLine.trimTo(ridden);
     });
@@ -279,7 +289,16 @@ class _GroupRideScreenState extends ConsumerState<GroupRideScreen> {
                     if (ride.ended)
                       GroupRideEndedPanel(ride: ride, onDone: _done)
                     else
-                      GroupRideHud(ride: ride, busy: _busy, onRiderTap: _showRider, onEndOrLeave: _confirmEndOrLeave),
+                      GroupRideHud(
+                        ride: ride,
+                        busy: _busy,
+                        onRiderTap: _showRider,
+                        onEndOrLeave: _confirmEndOrLeave,
+                        onRerouteGroup: () => context.runWithFeedback(
+                          ref.read(_provider.notifier).rerouteGroup,
+                          successMessage: 'New route sent to your group',
+                        ),
+                      ),
                   ],
                 ),
               ),
