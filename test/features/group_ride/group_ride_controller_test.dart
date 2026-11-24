@@ -9,6 +9,7 @@ import 'package:brodie/features/group_ride/domain/group_ride_models.dart';
 import 'package:brodie/features/groups/data/group_repository.dart';
 import 'package:brodie/features/groups/domain/group_models.dart';
 import 'package:brodie/features/map/data/location_repository.dart';
+import 'package:brodie/features/map/domain/location_health.dart';
 import 'package:brodie/features/map/domain/map_models.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -96,12 +97,18 @@ class _FakeChannel implements TripChannel {
 class _FakeLocation extends LocationRepository {
   final fixes = StreamController<GeoFix>.broadcast();
   bool? background;
+  var watches = 0;
+  LocationAccess access = LocationAccess.whileInUse;
 
   @override
   Stream<GeoFix> watchPosition({int distanceFilterMeters = 10, bool keepRunningInBackground = false}) {
     background = keepRunningInBackground;
+    watches++;
     return fixes.stream;
   }
+
+  @override
+  Future<LocationAccess> checkAccess() async => access;
 }
 
 RiderFix _fixOf(int seat, GeoPoint at, {required int tripSeconds, int speedKmh = 40}) => RiderFix(
@@ -343,6 +350,60 @@ void main() {
       async.flushMicrotasks();
       expect(channel.sos.last.active, isFalse);
       expect(stateOf(container)!.mySosAt, isNull);
+    });
+  });
+
+  test('losing location access mid-ride is shown, and cleared by the next position', () {
+    ride('sam', (async, container) {
+      location.fixes.addError(const LocationAccessLost(LocationAccess.serviceDisabled));
+      async.flushMicrotasks();
+      expect(stateOf(container)!.locationLost, LocationAccess.serviceDisabled);
+
+      location.fixes.add(fixAt(_start, _t0));
+      async.flushMicrotasks();
+      expect(stateOf(container)!.locationLost, isNull);
+    });
+  });
+
+  test('coming back to the app restarts tracking once location is allowed again', () {
+    ride('sam', (async, container) {
+      location.fixes.addError(const LocationAccessLost(LocationAccess.denied));
+      async.flushMicrotasks();
+      expect(location.watches, 1);
+
+      // Still off: nothing restarts, and the latest state is shown.
+      location.access = LocationAccess.deniedForever;
+      controllerOf(container).recheckLocation();
+      async.flushMicrotasks();
+      expect(stateOf(container)!.locationLost, LocationAccess.deniedForever);
+      expect(location.watches, 1);
+
+      location.access = LocationAccess.whileInUse;
+      controllerOf(container).recheckLocation();
+      async.flushMicrotasks();
+      expect(stateOf(container)!.locationLost, isNull);
+      expect(location.watches, 2);
+    });
+  });
+
+  test("other errors on the position stream don't count as lost access", () {
+    ride('sam', (async, container) {
+      location.fixes.addError(Exception('a GPS hiccup'));
+      async.flushMicrotasks();
+      expect(stateOf(container)!.locationLost, isNull);
+    });
+  });
+
+  test('a dropped connection is told apart from the first connect', () {
+    ride('sam', (async, container) {
+      expect(stateOf(container)!.wasConnected, isFalse);
+      channel.receive(const ChannelConnectionChanged(connected: true));
+      async.flushMicrotasks();
+      channel.receive(const ChannelConnectionChanged(connected: false));
+      async.flushMicrotasks();
+      final state = stateOf(container)!;
+      expect(state.connected, isFalse);
+      expect(state.wasConnected, isTrue);
     });
   });
 

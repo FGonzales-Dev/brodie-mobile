@@ -9,6 +9,7 @@ import '../../../history/domain/ride.dart';
 import '../../application/my_location_providers.dart';
 import '../../data/directions_repository.dart';
 import '../../data/location_repository.dart';
+import '../../domain/location_health.dart';
 import '../../domain/map_models.dart';
 import '../../domain/route_tracker.dart';
 import '../../domain/track_recorder.dart';
@@ -33,6 +34,10 @@ abstract class SoloRideState with _$SoloRideState {
     /// A problem worth showing, e.g. the daily route limit blocked a reroute.
     String? notice,
     DateTime? arrivedAt,
+
+    /// Set when the phone stopped giving the app locations mid-ride (access
+    /// turned off, or location switched off); cleared once they're back.
+    LocationAccess? locationLost,
   }) = _SoloRideState;
 
   const SoloRideState._();
@@ -64,10 +69,7 @@ class SoloRideController extends _$SoloRideController {
     if (plan is! RidePlanPreview) return null;
 
     _tracker = RouteTracker(plan.route, destination: plan.destination.location);
-    _fixes = ref
-        .read(locationRepositoryProvider)
-        .watchPosition(distanceFilterMeters: _distanceFilterMeters)
-        .listen(_onFix, onError: (Object _) {});
+    _listen();
     ref.onDispose(() => _fixes?.cancel());
 
     // The ride's GPS feed only reports after the rider moves, so start from
@@ -78,13 +80,49 @@ class SoloRideController extends _$SoloRideController {
     return SoloRideState(destination: plan.destination, route: plan.route, startedAt: DateTime.now());
   }
 
+  void _listen() {
+    _fixes?.cancel();
+    _fixes = ref
+        .read(locationRepositoryProvider)
+        .watchPosition(distanceFilterMeters: _distanceFilterMeters)
+        .listen(_onFix, onError: _onLocationError);
+  }
+
+  void _onLocationError(Object error) {
+    final current = state;
+    if (error is LocationAccessLost && current != null && !current.arrived) {
+      state = current.copyWith(locationLost: error.access);
+    }
+  }
+
+  /// Call when the app comes back to the foreground: if location was lost
+  /// and is allowed again, tracking restarts.
+  Future<void> recheckLocation() async {
+    final lost = state?.locationLost;
+    if (lost == null) return;
+    final access = await ref.read(locationRepositoryProvider).checkAccess();
+    final current = state;
+    if (!ref.mounted || current == null || current.locationLost == null) return;
+    if (access.isGranted) {
+      state = current.copyWith(locationLost: null);
+      _listen();
+    } else {
+      state = current.copyWith(locationLost: access);
+    }
+  }
+
   void _onFix(GeoFix fix) {
     final current = state;
     if (current == null || current.arrived) return;
 
     _track.add(fix);
     final progress = _tracker.progressAt(fix);
-    var next = current.copyWith(progress: progress, lastFix: fix, distanceRiddenMeters: _track.distanceMeters);
+    var next = current.copyWith(
+      progress: progress,
+      lastFix: fix,
+      distanceRiddenMeters: _track.distanceMeters,
+      locationLost: null,
+    );
     if (progress.arrived) {
       next = next.copyWith(arrivedAt: DateTime.now());
       _fixes?.cancel();

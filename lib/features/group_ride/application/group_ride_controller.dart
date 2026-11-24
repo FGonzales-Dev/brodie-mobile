@@ -11,6 +11,7 @@ import '../../groups/data/group_repository.dart';
 import '../../groups/domain/group_models.dart';
 import '../../history/domain/ride.dart';
 import '../../map/data/location_repository.dart';
+import '../../map/domain/location_health.dart';
 import '../../map/domain/map_models.dart';
 import '../../map/domain/polyline_codec.dart';
 import '../../map/domain/route_geometry.dart';
@@ -84,6 +85,14 @@ abstract class GroupRideState with _$GroupRideState {
     /// Connected to the ride channel. Positions still go out over REST
     /// while not, but nothing comes in.
     @Default(false) bool connected,
+
+    /// Was connected earlier, so a disconnection is a dropped connection
+    /// rather than the first connect still under way.
+    @Default(false) bool wasConnected,
+
+    /// Set when the phone stopped giving the app locations mid-ride (access
+    /// turned off, or location switched off); cleared once they're back.
+    LocationAccess? locationLost,
     GroupRideEnd? end,
     DateTime? endedAt,
 
@@ -139,6 +148,7 @@ class GroupRideController extends _$GroupRideController {
   final _others = <int, LiveRider>{};
   final _alongBySeat = <int, double>{};
   final _subscriptions = <StreamSubscription<Object?>>[];
+  StreamSubscription<GeoFix>? _gps;
   final _timers = <Timer>[];
   AppLifecycleListener? _lifecycle;
   var _channelOpen = true;
@@ -178,14 +188,8 @@ class GroupRideController extends _$GroupRideController {
 
     ref.onDispose(_stop);
     _channel = ref.read(tripChannelFactoryProvider)(trip.id);
-    _subscriptions
-      ..add(_channel.events.listen(_onChannelEvent))
-      ..add(
-        ref
-            .read(locationRepositoryProvider)
-            .watchPosition(distanceFilterMeters: _distanceFilterMeters, keepRunningInBackground: true)
-            .listen(_onFix, onError: (Object _) {}),
-      );
+    _subscriptions.add(_channel.events.listen(_onChannelEvent));
+    _listenToGps();
     _timers
       ..add(Timer.periodic(_tickEvery, (_) => _onTick()))
       ..add(Timer.periodic(_checkTripEvery, (_) => _checkTrip()));
@@ -195,6 +199,36 @@ class GroupRideController extends _$GroupRideController {
     unawaited(_channel.connect(seat: me.seat).catchError((Object _) {}));
 
     return GroupRideState(trip: trip, me: me, others: _sortedOthers(), startedAt: now);
+  }
+
+  void _listenToGps() {
+    _gps?.cancel();
+    _gps = ref
+        .read(locationRepositoryProvider)
+        .watchPosition(distanceFilterMeters: _distanceFilterMeters, keepRunningInBackground: true)
+        .listen(_onFix, onError: _onLocationError);
+  }
+
+  void _onLocationError(Object error) {
+    final current = state.value;
+    if (error is LocationAccessLost && current != null && !current.ended) {
+      state = AsyncData(current.copyWith(locationLost: error.access));
+    }
+  }
+
+  /// Call when the app comes back to the foreground: if location was lost
+  /// and is allowed again, tracking restarts.
+  Future<void> recheckLocation() async {
+    if (state.value?.locationLost == null) return;
+    final access = await ref.read(locationRepositoryProvider).checkAccess();
+    final current = state.value;
+    if (!ref.mounted || current == null || current.ended || current.locationLost == null) return;
+    if (access.isGranted) {
+      state = AsyncData(current.copyWith(locationLost: null));
+      _listenToGps();
+    } else {
+      state = AsyncData(current.copyWith(locationLost: access));
+    }
   }
 
   SendProfile _sendProfile() {
@@ -223,6 +257,7 @@ class GroupRideController extends _$GroupRideController {
         lastFix: fix,
         progress: _tracker.progressAt(fix),
         distanceRiddenMeters: _track.distanceMeters,
+        locationLost: null,
       ),
     );
   }
@@ -265,7 +300,7 @@ class GroupRideController extends _$GroupRideController {
       case TripEndedByLeader():
         _finishRiding(GroupRideEnd.endedByLeader);
       case ChannelConnectionChanged(:final connected):
-        _emit(current.copyWith(connected: connected));
+        _emit(current.copyWith(connected: connected, wasConnected: current.wasConnected || connected));
     }
   }
 
@@ -466,6 +501,8 @@ class GroupRideController extends _$GroupRideController {
 
   /// Stops GPS, timers and the channel. Safe to call more than once.
   void _stop() {
+    unawaited(_gps?.cancel());
+    _gps = null;
     for (final subscription in _subscriptions) {
       unawaited(subscription.cancel());
     }

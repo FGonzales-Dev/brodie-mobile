@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/errors/app_failure.dart';
+import '../domain/location_health.dart';
 import '../domain/map_models.dart';
 
 part 'location_repository.g.dart';
@@ -58,8 +59,15 @@ class LocationRepository {
   Stream<GeoFix> watchPosition({int distanceFilterMeters = 10, bool keepRunningInBackground = false}) {
     return Geolocator.getPositionStream(
       locationSettings: _settings(distanceFilterMeters, keepRunningInBackground),
-    ).map(_toGeoFix);
+    ).map(_toGeoFix).handleError((Object error) => throw _accessLostFrom(error) ?? error);
   }
+
+  /// The plugin's own errors for "no more locations", as [LocationAccessLost].
+  static LocationAccessLost? _accessLostFrom(Object error) => switch (error) {
+        LocationServiceDisabledException() => const LocationAccessLost(LocationAccess.serviceDisabled),
+        PermissionDeniedException() => const LocationAccessLost(LocationAccess.denied),
+        _ => null,
+      };
 
   static LocationSettings _settings(int distanceFilterMeters, bool background) {
     if (!background) {

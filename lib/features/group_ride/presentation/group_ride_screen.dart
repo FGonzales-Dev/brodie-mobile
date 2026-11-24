@@ -49,6 +49,21 @@ class _GroupRideScreenState extends ConsumerState<GroupRideScreen> {
   var _following = true;
   var _busy = false;
 
+  /// The rider may have turned location back on in system settings.
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onResume: () => ref.read(_provider.notifier).recheckLocation());
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
   GroupRideControllerProvider get _provider => groupRideControllerProvider(widget.groupId);
 
   GroupRideState? get _ride => ref.read(_provider).value;

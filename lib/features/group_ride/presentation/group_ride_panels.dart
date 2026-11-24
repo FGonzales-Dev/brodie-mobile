@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design_system/design_system.dart';
 import '../../../core/utils/units.dart';
+import '../../map/presentation/widgets/location_issue_banner.dart';
 import '../../settings/application/settings_controller.dart';
 import '../application/group_ride_controller.dart';
 import '../domain/group_ride_models.dart';
@@ -25,7 +26,11 @@ class GroupRideBanner extends StatelessWidget {
     final colors = context.colors;
     final total = ride.others.length + 1;
     final online = ride.others.where((other) => other.online).length + (ride.connected ? 1 : 0);
-    final subtitle = ride.connected ? '$online of $total riders online' : 'Connecting to your group…';
+    final subtitle = switch (ride) {
+      GroupRideState(connected: true) => '$online of $total riders online',
+      GroupRideState(wasConnected: true) => 'Connection lost · reconnecting…',
+      _ => 'Connecting to your group…',
+    };
     final behind = ride.behind;
 
     return Column(
@@ -57,8 +62,47 @@ class GroupRideBanner extends StatelessWidget {
         ),
         for (final rider in ride.sos) _SosAlert(rider: rider, onShow: () => onShowRider(rider)),
         if (ride.mySosAt != null) _MySosAlert(onImSafe: onImSafe),
+        LocationIssueBanner(
+          lastFix: ride.lastFix,
+          accessLost: ride.locationLost,
+          startedAt: ride.startedAt,
+          inGroupRide: true,
+        ),
+        if (ride.wasConnected && !ride.connected) const _OfflineNote(),
         if (behind.isNotEmpty) _BehindAlert(riders: behind),
       ],
+    );
+  }
+}
+
+/// While the connection is down, nothing new arrives from the group; this
+/// rider's own positions still go out when the phone can reach the server.
+class _OfflineNote extends StatelessWidget {
+  const _OfflineNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      margin: const EdgeInsets.only(top: BrodieSpace.xs),
+      padding: const EdgeInsets.all(BrodieSpace.sm),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BrodieSize.borderRadius,
+        border: Border.all(color: colors.warning, width: BrodieSize.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.wifi_off, color: colors.warning),
+          const SizedBox(width: BrodieSpace.sm),
+          Expanded(
+            child: Text(
+              "No connection. Other riders' positions are from before it dropped; yours is still sent when possible.",
+              style: BrodieType.caption.copyWith(color: colors.textPrimary),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

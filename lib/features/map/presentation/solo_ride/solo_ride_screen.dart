@@ -14,6 +14,7 @@ import '../../../../core/presentation/keep_screen_on.dart';
 import '../../../history/application/ride_providers.dart';
 import '../../../sos/presentation/sos_screen.dart';
 import '../ride_planning_controller.dart';
+import '../widgets/location_issue_banner.dart';
 import '../widgets/map_ornaments.dart';
 import '../widgets/ride_route_line.dart';
 import '../widgets/route_layers.dart';
@@ -44,6 +45,23 @@ class _SoloRideScreenState extends ConsumerState<SoloRideScreen> {
   final _topPanel = GlobalKey();
   final _bottomPanel = GlobalKey();
   var _following = true;
+
+  /// The rider may have turned location back on in system settings.
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(
+      onResume: () => ref.read(soloRideControllerProvider.notifier).recheckLocation(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
 
   Future<void> _onMapCreated(MapboxMap map) async {
     _map = map;
@@ -188,7 +206,17 @@ class _SoloRideScreenState extends ConsumerState<SoloRideScreen> {
                   key: _topPanel,
                   child: Padding(
                     padding: const EdgeInsets.all(BrodieSpace.md),
-                    child: ManeuverBanner(ride: ride),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ManeuverBanner(ride: ride),
+                        LocationIssueBanner(
+                          lastFix: ride.lastFix,
+                          accessLost: ride.locationLost,
+                          startedAt: ride.startedAt,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
