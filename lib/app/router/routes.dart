@@ -4,6 +4,7 @@ abstract final class Routes {
   static const signIn = '/sign-in';
   static const signUp = '/sign-up';
   static const chooseUsername = '/choose-username';
+  static const welcome = '/welcome';
 
   static const map = '/map';
   static const destinationSearch = '/map/search';

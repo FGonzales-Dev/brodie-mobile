@@ -20,6 +20,8 @@ import '../../features/history/presentation/ride_detail_screen.dart';
 import '../../features/map/presentation/destination_search_screen.dart';
 import '../../features/map/presentation/map_screen.dart';
 import '../../features/map/presentation/solo_ride/solo_ride_screen.dart';
+import '../../features/onboarding/data/onboarding_store.dart';
+import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/profile/application/my_profile_provider.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/map/domain/map_models.dart';
@@ -41,7 +43,8 @@ GoRouter router(Ref ref) {
   final pending = _PendingLink();
   ref
     ..listen(currentUserProvider, (_, _) => refresh.value++)
-    ..listen(myProfileProvider, (_, _) => refresh.value++);
+    ..listen(myProfileProvider, (_, _) => refresh.value++)
+    ..listen(onboardingDoneProvider, (_, _) => refresh.value++);
 
   final router = GoRouter(
     initialLocation: Routes.splash,
@@ -52,6 +55,7 @@ GoRouter router(Ref ref) {
       GoRoute(path: Routes.signIn, builder: (_, _) => const SignInScreen()),
       GoRoute(path: Routes.signUp, builder: (_, _) => const SignUpScreen()),
       GoRoute(path: Routes.chooseUsername, builder: (_, _) => const ChooseUsernameScreen()),
+      GoRoute(path: Routes.welcome, builder: (_, _) => const OnboardingScreen()),
       GoRoute(path: Routes.destinationSearch, builder: (_, _) => const DestinationSearchScreen()),
       GoRoute(path: Routes.soloRide, builder: (_, _) => const SoloRideScreen()),
       GoRoute(
@@ -134,7 +138,8 @@ class _PendingLink {
   }
 }
 
-/// Gates, in order: signed in → profile loaded → username chosen → app.
+/// Gates, in order: signed in → profile loaded → username chosen →
+/// onboarding seen (once per account on this phone) → app.
 String? _redirect(Ref ref, String location, _PendingLink pending) {
   String? gate(String to, {required bool alreadyThere}) {
     if (Routes.isJoinLink(location)) pending.location = location;
@@ -153,6 +158,10 @@ String? _redirect(Ref ref, String location, _PendingLink pending) {
     return gate(Routes.chooseUsername, alreadyThere: location == Routes.chooseUsername);
   }
 
-  const gateRoutes = {Routes.splash, Routes.chooseUsername, ...Routes.signedOut};
+  if (!ref.read(onboardingDoneProvider)) {
+    return gate(Routes.welcome, alreadyThere: location == Routes.welcome);
+  }
+
+  const gateRoutes = {Routes.splash, Routes.chooseUsername, Routes.welcome, ...Routes.signedOut};
   return gateRoutes.contains(location) ? (pending.take() ?? Routes.map) : null;
 }
