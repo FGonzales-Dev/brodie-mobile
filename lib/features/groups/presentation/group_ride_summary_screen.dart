@@ -71,11 +71,17 @@ class _Summary extends ConsumerWidget {
               const SizedBox(height: BrodieSpace.md),
               Row(
                 children: [
-                  Expanded(child: StatTile(value: planned.value, unit: '${planned.unit} route')),
+                  Expanded(
+                    child: StatTile(value: planned.value, unit: '${planned.unit} route'),
+                  ),
                   const SizedBox(width: BrodieSpace.xs),
-                  Expanded(child: StatTile(value: rideTime?.value ?? '--', unit: rideTime?.unit ?? 'ride time')),
+                  Expanded(
+                    child: StatTile(value: rideTime?.value ?? '--', unit: rideTime?.unit ?? 'ride time'),
+                  ),
                   const SizedBox(width: BrodieSpace.xs),
-                  Expanded(child: StatTile(value: '${riders.length}', unit: riders.length == 1 ? 'rider' : 'riders')),
+                  Expanded(
+                    child: StatTile(value: '${riders.length}', unit: riders.length == 1 ? 'rider' : 'riders'),
+                  ),
                 ],
               ),
               SectionLabel('Riders (${riders.length})'),

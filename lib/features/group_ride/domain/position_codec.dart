@@ -7,15 +7,9 @@ import 'group_ride_models.dart';
 /// rounded to 5 decimals (about 1 m).
 abstract final class PositionCodec {
   static Map<String, Object> encode(RiderFix fix) => {
-        's': fix.seat,
-        'a': [
-          _round5(fix.latitude),
-          _round5(fix.longitude),
-          fix.headingDegrees,
-          fix.speedKmh,
-          fix.tripSeconds,
-        ],
-      };
+    's': fix.seat,
+    'a': [_round5(fix.latitude), _round5(fix.longitude), fix.headingDegrees, fix.speedKmh, fix.tripSeconds],
+  };
 
   /// Returns null for anything malformed: payloads come from other devices.
   static RiderFix? decode(Map<String, dynamic> payload) {
@@ -55,10 +49,10 @@ abstract final class PositionCodec {
   /// SOS on or off: `{"s": seat, "on": true, "a": [...]}`, where `a` is the
   /// same position array as a fix and is left out without a position.
   static Map<String, Object> encodeSos(SosSignal signal) => {
-        's': signal.seat,
-        'on': signal.active,
-        if (signal.fix case final fix?) 'a': encode(fix)['a']!,
-      };
+    's': signal.seat,
+    'on': signal.active,
+    if (signal.fix case final fix?) 'a': encode(fix)['a']!,
+  };
 
   static SosSignal? decodeSos(Map<String, dynamic> payload) {
     final seat = payload['s'];

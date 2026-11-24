@@ -88,16 +88,16 @@ class _FakeVehicles implements VehicleRepository {
 }
 
 Ride ride(String id) => Ride(
-      id: id,
-      arrived: true,
-      distanceMeters: 5000,
-      duration: const Duration(minutes: 12),
-      movingTime: const Duration(minutes: 10),
-      maxSpeedMps: 20,
-      startedAt: DateTime(2026, 11, 2, 8),
-      endedAt: DateTime(2026, 11, 2, 8, 12),
-      path: const [GeoPoint(latitude: 14.1, longitude: 120.9), GeoPoint(latitude: 14.14, longitude: 120.9)],
-    );
+  id: id,
+  arrived: true,
+  distanceMeters: 5000,
+  duration: const Duration(minutes: 12),
+  movingTime: const Duration(minutes: 10),
+  maxSpeedMps: 20,
+  startedAt: DateTime(2026, 11, 2, 8),
+  endedAt: DateTime(2026, 11, 2, 8, 12),
+  path: const [GeoPoint(latitude: 14.1, longitude: 120.9), GeoPoint(latitude: 14.14, longitude: 120.9)],
+);
 
 void main() {
   late SharedPreferences prefs;
@@ -111,12 +111,14 @@ void main() {
 
   /// A fresh app session for [userId] over the same phone storage and server.
   ProviderContainer session({String userId = 'rider', List<Vehicle> vehicles = const []}) {
-    final container = ProviderContainer(overrides: [
-      sharedPreferencesProvider.overrideWithValue(prefs),
-      currentUserProvider.overrideWithValue(AppUser(id: userId)),
-      rideRepositoryProvider.overrideWithValue(server),
-      vehicleRepositoryProvider.overrideWithValue(_FakeVehicles(vehicles)),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        currentUserProvider.overrideWithValue(AppUser(id: userId)),
+        rideRepositoryProvider.overrideWithValue(server),
+        vehicleRepositoryProvider.overrideWithValue(_FakeVehicles(vehicles)),
+      ],
+    );
     addTearDown(container.dispose);
     container.listen(rideSyncProvider, (_, _) {});
     return container;
@@ -154,7 +156,9 @@ void main() {
   });
 
   test('gives a ride the only vehicle in the garage', () async {
-    final app = session(vehicles: [const Vehicle(id: 'adv', type: VehicleType.motorcycle, name: 'ADV 160')]);
+    final app = session(
+      vehicles: [const Vehicle(id: 'adv', type: VehicleType.motorcycle, name: 'ADV 160')],
+    );
     await app.read(rideSyncProvider.notifier).save(ride('a'));
 
     expect(server.saved['a']?.vehicleId, 'adv');
@@ -205,12 +209,12 @@ void main() {
 
   group('history filters', () {
     Ride at(String id, DateTime startedAt, {double km = 5, String? trip, String? vehicle}) => ride(id).copyWith(
-          startedAt: startedAt,
-          endedAt: startedAt.add(const Duration(minutes: 12)),
-          distanceMeters: km * 1000,
-          groupTripId: trip,
-          vehicleId: vehicle,
-        );
+      startedAt: startedAt,
+      endedAt: startedAt.add(const Duration(minutes: 12)),
+      distanceMeters: km * 1000,
+      groupTripId: trip,
+      vehicleId: vehicle,
+    );
 
     test('the list reloads with the filter, and every page uses the same one', () async {
       final now = DateTime.now();

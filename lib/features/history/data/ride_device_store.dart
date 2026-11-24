@@ -49,34 +49,34 @@ class RideDeviceStore {
   }
 
   static Map<String, Object?> _toJson(Ride ride) => {
-        'id': ride.id,
-        'destination': ride.destinationName,
-        'arrived': ride.arrived,
-        'vehicle': ride.vehicleId,
-        'distance_m': ride.distanceMeters,
-        'duration_s': ride.duration.inSeconds,
-        'moving_s': ride.movingTime.inSeconds,
-        'max_speed_mps': ride.maxSpeedMps,
-        'started_at': ride.startedAt.toUtc().toIso8601String(),
-        'ended_at': ride.endedAt.toUtc().toIso8601String(),
-        'polyline6': PolylineCodec.encode(ride.path),
-        'group_trip': ride.groupTripId,
-      };
+    'id': ride.id,
+    'destination': ride.destinationName,
+    'arrived': ride.arrived,
+    'vehicle': ride.vehicleId,
+    'distance_m': ride.distanceMeters,
+    'duration_s': ride.duration.inSeconds,
+    'moving_s': ride.movingTime.inSeconds,
+    'max_speed_mps': ride.maxSpeedMps,
+    'started_at': ride.startedAt.toUtc().toIso8601String(),
+    'ended_at': ride.endedAt.toUtc().toIso8601String(),
+    'polyline6': PolylineCodec.encode(ride.path),
+    'group_trip': ride.groupTripId,
+  };
 
   static Ride _fromJson(Map<String, dynamic> json) => Ride(
-        id: json['id'] as String,
-        destinationName: json['destination'] as String?,
-        arrived: json['arrived'] as bool,
-        vehicleId: json['vehicle'] as String?,
-        distanceMeters: (json['distance_m'] as num).toDouble(),
-        duration: Duration(seconds: json['duration_s'] as int),
-        movingTime: Duration(seconds: json['moving_s'] as int),
-        maxSpeedMps: (json['max_speed_mps'] as num).toDouble(),
-        startedAt: DateTime.parse(json['started_at'] as String).toLocal(),
-        endedAt: DateTime.parse(json['ended_at'] as String).toLocal(),
-        path: PolylineCodec.decode(json['polyline6'] as String),
-        groupTripId: json['group_trip'] as String?,
-      );
+    id: json['id'] as String,
+    destinationName: json['destination'] as String?,
+    arrived: json['arrived'] as bool,
+    vehicleId: json['vehicle'] as String?,
+    distanceMeters: (json['distance_m'] as num).toDouble(),
+    duration: Duration(seconds: json['duration_s'] as int),
+    movingTime: Duration(seconds: json['moving_s'] as int),
+    maxSpeedMps: (json['max_speed_mps'] as num).toDouble(),
+    startedAt: DateTime.parse(json['started_at'] as String).toLocal(),
+    endedAt: DateTime.parse(json['ended_at'] as String).toLocal(),
+    path: PolylineCodec.decode(json['polyline6'] as String),
+    groupTripId: json['group_trip'] as String?,
+  );
 }
 
 @Riverpod(keepAlive: true)

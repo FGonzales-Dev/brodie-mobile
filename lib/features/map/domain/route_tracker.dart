@@ -54,7 +54,8 @@ class RouteTracker {
     final secondsPerMeter = route.distanceMeters > 0 ? route.duration.inSeconds / route.distanceMeters : 0.0;
     final next = _maneuverAlong.indexWhere((along) => along > projection.alongRoute - _passedMarginMeters);
 
-    final closeToDestination = distanceBetween(fix.position, destination) <= arrivalRadiusMeters ||
+    final closeToDestination =
+        distanceBetween(fix.position, destination) <= arrivalRadiusMeters ||
         (remaining <= arrivalRadiusMeters && projection.distanceFromRoute <= arrivalRadiusMeters);
 
     return RideProgress(

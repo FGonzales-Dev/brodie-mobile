@@ -8,7 +8,6 @@ import '../domain/ride.dart';
 
 String rideTitle(Ride ride) => ride.destinationName ?? 'Ride';
 
-
 /// Distance and moving time, then average and top speed.
 class RideStats extends ConsumerWidget {
   const RideStats({super.key, required this.ride});
@@ -27,17 +26,25 @@ class RideStats extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Expanded(child: StatTile(value: distance.value, unit: distance.unit)),
+            Expanded(
+              child: StatTile(value: distance.value, unit: distance.unit),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: moving.value, unit: '${moving.unit} moving')),
+            Expanded(
+              child: StatTile(value: moving.value, unit: '${moving.unit} moving'),
+            ),
           ],
         ),
         const SizedBox(height: BrodieSpace.xs),
         Row(
           children: [
-            Expanded(child: StatTile(value: average.value, unit: 'avg ${average.unit}')),
+            Expanded(
+              child: StatTile(value: average.value, unit: 'avg ${average.unit}'),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: top.value, unit: 'top ${top.unit}')),
+            Expanded(
+              child: StatTile(value: top.value, unit: 'top ${top.unit}'),
+            ),
           ],
         ),
       ],

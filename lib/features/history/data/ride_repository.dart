@@ -32,7 +32,12 @@ class RideRepository {
     return guardRemote(() async {
       final rows = await _client.rpc(
         'get_ride_history',
-        params: {'p_limit': limit, 'p_offset': offset, ...filterParams(filter, now ?? DateTime.now()), 'p_sort': filter.sort.wire},
+        params: {
+          'p_limit': limit,
+          'p_offset': offset,
+          ...filterParams(filter, now ?? DateTime.now()),
+          'p_sort': filter.sort.wire,
+        },
       );
       return (rows as List).cast<Map<String, dynamic>>().map(rideFromRow).toList();
     });
@@ -58,10 +63,10 @@ class RideRepository {
 
   @visibleForTesting
   static RideTotals totalsFromRow(Map<String, dynamic> row) => (
-        count: (row['ride_count'] as num).toInt(),
-        distanceMeters: (row['distance_m'] as num).toDouble(),
-        movingTime: Duration(seconds: (row['moving_s'] as num).toInt()),
-      );
+    count: (row['ride_count'] as num).toInt(),
+    distanceMeters: (row['distance_m'] as num).toDouble(),
+    movingTime: Duration(seconds: (row['moving_s'] as num).toInt()),
+  );
 
   /// One ride with its route.
   Future<Ride> fetchRide(String id) {
@@ -82,19 +87,19 @@ class RideRepository {
 
   @visibleForTesting
   static Map<String, Object?> saveParams(Ride ride) => {
-        'p_id': ride.id,
-        'p_route_polyline6': PolylineCodec.encode(ride.path),
-        'p_distance_m': ride.distanceMeters,
-        'p_duration_s': ride.duration.inSeconds,
-        'p_moving_s': ride.movingTime.inSeconds,
-        'p_max_speed_mps': ride.maxSpeedMps,
-        'p_started_at': ride.startedAt.toUtc().toIso8601String(),
-        'p_ended_at': ride.endedAt.toUtc().toIso8601String(),
-        'p_arrived': ride.arrived,
-        'p_destination_name': ride.destinationName,
-        'p_vehicle_id': ride.vehicleId,
-        'p_group_trip_id': ride.groupTripId,
-      };
+    'p_id': ride.id,
+    'p_route_polyline6': PolylineCodec.encode(ride.path),
+    'p_distance_m': ride.distanceMeters,
+    'p_duration_s': ride.duration.inSeconds,
+    'p_moving_s': ride.movingTime.inSeconds,
+    'p_max_speed_mps': ride.maxSpeedMps,
+    'p_started_at': ride.startedAt.toUtc().toIso8601String(),
+    'p_ended_at': ride.endedAt.toUtc().toIso8601String(),
+    'p_arrived': ride.arrived,
+    'p_destination_name': ride.destinationName,
+    'p_vehicle_id': ride.vehicleId,
+    'p_group_trip_id': ride.groupTripId,
+  };
 
   @visibleForTesting
   static Ride rideFromRow(Map<String, dynamic> row) {

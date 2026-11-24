@@ -77,19 +77,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   const _IntroPage(
                     icon: Icons.groups,
                     title: 'Ride as a crew.',
-                    body: "Your group's leader plans the ride and the route. "
+                    body:
+                        "Your group's leader plans the ride and the route. "
                         'Everyone joins from the group and follows the same line on the map.',
                   ),
                   const _IntroPage(
                     icon: Icons.sports_motorsports,
                     title: 'See your crew live.',
-                    body: "During a group ride, everyone on it sees where the others are. "
+                    body:
+                        "During a group ride, everyone on it sees where the others are. "
                         'Brodie tells you when someone falls behind, so nobody gets left at a junction.',
                   ),
                   const _IntroPage(
                     icon: Icons.sos,
                     title: 'Help is one tap away.',
-                    body: 'The SOS button alerts your group with your location and opens a text '
+                    body:
+                        'The SOS button alerts your group with your location and opens a text '
                         'to your emergency contacts, ready to send.',
                   ),
                   _LocationStep(onDone: _next),
@@ -160,7 +163,10 @@ class _IntroPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(title.toUpperCase(), style: BrodieType.screenTitle.copyWith(fontSize: 44, color: colors.textPrimary)),
+                Text(
+                  title.toUpperCase(),
+                  style: BrodieType.screenTitle.copyWith(fontSize: 44, color: colors.textPrimary),
+                ),
                 const SizedBox(height: BrodieSpace.sm),
                 Text(body, style: BrodieType.body.copyWith(color: colors.textSecondary, fontSize: 16)),
               ],
@@ -206,13 +212,7 @@ class _Dots extends StatelessWidget {
 /// Shared layout for the setup steps: heading, body, then the step's own
 /// content and buttons pinned to the bottom.
 class _SetupPage extends StatelessWidget {
-  const _SetupPage({
-    required this.icon,
-    required this.title,
-    required this.body,
-    this.content,
-    required this.actions,
-  });
+  const _SetupPage({required this.icon, required this.title, required this.body, this.content, required this.actions});
 
   final IconData icon;
   final String title;
@@ -231,9 +231,15 @@ class _SetupPage extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(BrodieSpace.lg, BrodieSpace.xl, BrodieSpace.lg, BrodieSpace.md),
               children: [
-                Align(alignment: Alignment.centerLeft, child: IconTile(icon: icon)),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconTile(icon: icon),
+                ),
                 const SizedBox(height: BrodieSpace.md),
-                Text(title.toUpperCase(), style: BrodieType.screenTitle.copyWith(fontSize: 40, color: colors.textPrimary)),
+                Text(
+                  title.toUpperCase(),
+                  style: BrodieType.screenTitle.copyWith(fontSize: 40, color: colors.textPrimary),
+                ),
                 const SizedBox(height: BrodieSpace.sm),
                 Text(body, style: BrodieType.body.copyWith(color: colors.textSecondary, fontSize: 16)),
                 if (content != null) ...[const SizedBox(height: BrodieSpace.lg), content!],
@@ -265,24 +271,24 @@ class _LocationStep extends ConsumerWidget {
 
     final List<Widget> actions = switch (access.value) {
       final LocationAccess granted when granted.isGranted => [
-          BrodieButton(label: 'Continue', icon: Icons.arrow_forward, onPressed: onDone),
-        ],
+        BrodieButton(label: 'Continue', icon: Icons.arrow_forward, onPressed: onDone),
+      ],
       LocationAccess.deniedForever || LocationAccess.serviceDisabled => [
-          BrodieButton(label: 'Open settings', icon: Icons.settings, onPressed: controller.openSystemSettings),
-          TextButton(onPressed: onDone, child: const Text('Not now')),
-        ],
+        BrodieButton(label: 'Open settings', icon: Icons.settings, onPressed: controller.openSystemSettings),
+        TextButton(onPressed: onDone, child: const Text('Not now')),
+      ],
       _ => [
-          BrodieButton(
-            label: 'Allow location',
-            icon: Icons.my_location,
-            isLoading: asking,
-            onPressed: () async {
-              await controller.request();
-              onDone();
-            },
-          ),
-          TextButton(onPressed: asking ? null : onDone, child: const Text('Not now')),
-        ],
+        BrodieButton(
+          label: 'Allow location',
+          icon: Icons.my_location,
+          isLoading: asking,
+          onPressed: () async {
+            await controller.request();
+            onDone();
+          },
+        ),
+        TextButton(onPressed: asking ? null : onDone, child: const Text('Not now')),
+      ],
     };
 
     return RefreshOnResume(
@@ -290,14 +296,20 @@ class _LocationStep extends ConsumerWidget {
       child: _SetupPage(
         icon: Icons.location_on_outlined,
         title: 'Your location',
-        body: 'Brodie uses your location while you use the app, to show where you are and route you. '
+        body:
+            'Brodie uses your location while you use the app, to show where you are and route you. '
             "During a group ride, it's shared with the riders on that ride until it ends, also with the "
             "screen locked, and it isn't stored. Your own rides are saved to your history.",
         content: switch (access.value) {
-          final LocationAccess granted when granted.isGranted =>
-            const _Done(text: 'Location is on. You can change this in Settings any time.'),
-          LocationAccess.deniedForever => const _Note(text: 'Location is blocked for Brodie. Allow it in system settings.'),
-          LocationAccess.serviceDisabled => const _Note(text: "Your phone's location is off. Turn it on in system settings."),
+          final LocationAccess granted when granted.isGranted => const _Done(
+            text: 'Location is on. You can change this in Settings any time.',
+          ),
+          LocationAccess.deniedForever => const _Note(
+            text: 'Location is blocked for Brodie. Allow it in system settings.',
+          ),
+          LocationAccess.serviceDisabled => const _Note(
+            text: "Your phone's location is off. Turn it on in system settings.",
+          ),
           _ => null,
         },
         actions: actions,
@@ -346,7 +358,11 @@ class _VehicleStepState extends ConsumerState<_VehicleStep> {
         icon: Icons.two_wheeler,
         title: 'Your ride',
         body: 'Your rides are tagged with what you rode, and your crew can see it.',
-        content: _Done(text: existing.length == 1 ? '${existing.single.name} is in your garage.' : '${existing.length} vehicles in your garage.'),
+        content: _Done(
+          text: existing.length == 1
+              ? '${existing.single.name} is in your garage.'
+              : '${existing.length} vehicles in your garage.',
+        ),
         actions: [BrodieButton(label: 'Continue', icon: Icons.arrow_forward, onPressed: widget.onDone)],
       );
     }
@@ -411,9 +427,11 @@ class _ContactStepState extends ConsumerState<_ContactStep> {
     if (!_form.currentState!.validate()) return;
     setState(() => _saving = true);
     final saved = await context.runWithFeedback(
-      () => ref
-          .read(emergencyContactsControllerProvider.notifier)
-          .add((name: _name.text.trim(), phone: _phone.text.trim(), relationship: null)),
+      () => ref.read(emergencyContactsControllerProvider.notifier).add((
+        name: _name.text.trim(),
+        phone: _phone.text.trim(),
+        relationship: null,
+      )),
     );
     if (!mounted) return;
     setState(() => _saving = false);
@@ -434,13 +452,16 @@ class _ContactStepState extends ConsumerState<_ContactStep> {
               ? '${existing.single.name} is your emergency contact.'
               : '${existing.length} emergency contacts saved.',
         ),
-        actions: [BrodieButton(label: 'Finish', icon: Icons.check, isLoading: widget.finishing, onPressed: widget.onDone)],
+        actions: [
+          BrodieButton(label: 'Finish', icon: Icons.check, isLoading: widget.finishing, onPressed: widget.onDone),
+        ],
       );
     }
     return _SetupPage(
       icon: Icons.health_and_safety_outlined,
       title: 'Who should we text?',
-      body: 'If you send an SOS, Brodie opens a text to your emergency contact with your location. '
+      body:
+          'If you send an SOS, Brodie opens a text to your emergency contact with your location. '
           'Add more in Profile.',
       content: Form(
         key: _form,

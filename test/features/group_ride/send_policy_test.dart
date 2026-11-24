@@ -60,13 +60,7 @@ void main() {
 
   group('usage budget', () {
     // A typical 2 h ride: town, highway, a fuel stop, town, lunch.
-    final mixedRide = [
-      minutesAt(20, 25),
-      minutesAt(60, 80),
-      minutesAt(10, 0),
-      minutesAt(10, 25),
-      minutesAt(20, 0),
-    ];
+    final mixedRide = [minutesAt(20, 25), minutesAt(60, 80), minutesAt(10, 0), minutesAt(10, 25), minutesAt(20, 0)];
     const naiveSends = 2 * 60 * 60 ~/ 5; // fixed 5 s interval: 1440
 
     test('mixed 2 h ride sends at least 30% less than a fixed 5 s interval', () {

@@ -60,14 +60,16 @@ class PhotoStorage {
   /// Returns the new file's path. A new name every time, so a replaced photo
   /// never shows stale from a cache.
   Future<String> upload(PhotoBucket bucket, Uint8List jpeg) => guardRemote(() async {
-        final path = '$_userId/${const Uuid().v4()}.jpg';
-        await _client.storage.from(bucket.id).uploadBinary(
-              path,
-              jpeg,
-              fileOptions: const FileOptions(contentType: 'image/jpeg', cacheControl: '31536000'),
-            );
-        return path;
-      });
+    final path = '$_userId/${const Uuid().v4()}.jpg';
+    await _client.storage
+        .from(bucket.id)
+        .uploadBinary(
+          path,
+          jpeg,
+          fileOptions: const FileOptions(contentType: 'image/jpeg', cacheControl: '31536000'),
+        );
+    return path;
+  });
 
   /// Uploads [jpeg], points its owner at it with [save], then deletes the
   /// photo it [replaces]. If saving fails, the new upload is deleted again,

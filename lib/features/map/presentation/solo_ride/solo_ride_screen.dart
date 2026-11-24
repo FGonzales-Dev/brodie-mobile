@@ -53,9 +53,7 @@ class _SoloRideScreenState extends ConsumerState<SoloRideScreen> {
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(
-      onResume: () => ref.read(soloRideControllerProvider.notifier).recheckLocation(),
-    );
+    _lifecycle = AppLifecycleListener(onResume: () => ref.read(soloRideControllerProvider.notifier).recheckLocation());
   }
 
   @override

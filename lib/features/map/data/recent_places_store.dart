@@ -38,17 +38,17 @@ class RecentPlacesStore {
   }
 
   static Map<String, Object?> _toJson(Place place) => {
-        'name': place.name,
-        'address': place.address,
-        'lat': place.location.latitude,
-        'lng': place.location.longitude,
-      };
+    'name': place.name,
+    'address': place.address,
+    'lat': place.location.latitude,
+    'lng': place.location.longitude,
+  };
 
   static Place _fromJson(Map<String, dynamic> json) => Place(
-        name: json['name'] as String,
-        address: json['address'] as String?,
-        location: GeoPoint(latitude: (json['lat'] as num).toDouble(), longitude: (json['lng'] as num).toDouble()),
-      );
+    name: json['name'] as String,
+    address: json['address'] as String?,
+    location: GeoPoint(latitude: (json['lat'] as num).toDouble(), longitude: (json['lng'] as num).toDouble()),
+  );
 }
 
 @Riverpod(keepAlive: true)

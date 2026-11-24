@@ -127,9 +127,7 @@ class _SosScreenState extends ConsumerState<SosScreen> {
   }
 
   Future<void> _openText() async {
-    final time = _fix == null
-        ? ''
-        : clockLabel(context, _fix!.timestamp);
+    final time = _fix == null ? '' : clockLabel(context, _fix!.timestamp);
     final body = SosMessage.text(username: ref.read(myProfileProvider).value?.username, fix: _fix, time: time);
     final uri = SosMessage.smsUri(
       [for (final contact in _contacts) contact.phone],
@@ -182,26 +180,26 @@ class _SosScreenState extends ConsumerState<SosScreen> {
         canPop: _phase != _Phase.sending,
         child: switch (_phase) {
           _Phase.counting || _Phase.sending => _Countdown(
-              remaining: _remaining,
-              sending: _phase == _Phase.sending,
-              inGroupRide: widget.groupId != null,
-              onCancel: () => context.pop(),
-              onSendNow: _send,
-            ),
+            remaining: _remaining,
+            sending: _phase == _Phase.sending,
+            inGroupRide: widget.groupId != null,
+            onCancel: () => context.pop(),
+            onSendNow: _send,
+          ),
           _Phase.sent => _Sent(
-              groupAlerted: _groupAlerted,
-              contacts: _contacts,
-              contactsFailed: _contactsFailed,
-              textOpened: _textOpened,
-              hasLocation: _fix != null,
-              cancellingGroupSos: _cancellingGroupSos,
-              onRetryGroup: _retryGroup,
-              onOpenText: _openText,
-              onCall: _call,
-              onAddContacts: () => context.push(Routes.emergencyContacts),
-              onImSafe: _groupAlerted == true ? _imSafe : null,
-              onDone: () => context.pop(),
-            ),
+            groupAlerted: _groupAlerted,
+            contacts: _contacts,
+            contactsFailed: _contactsFailed,
+            textOpened: _textOpened,
+            hasLocation: _fix != null,
+            cancellingGroupSos: _cancellingGroupSos,
+            onRetryGroup: _retryGroup,
+            onOpenText: _openText,
+            onCall: _call,
+            onAddContacts: () => context.push(Routes.emergencyContacts),
+            onImSafe: _groupAlerted == true ? _imSafe : null,
+            onDone: () => context.pop(),
+          ),
         },
       ),
     );
@@ -236,7 +234,11 @@ class _Countdown extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              Text('SOS', textAlign: TextAlign.center, style: BrodieType.stat.copyWith(color: onDanger, fontSize: 56)),
+              Text(
+                'SOS',
+                textAlign: TextAlign.center,
+                style: BrodieType.stat.copyWith(color: onDanger, fontSize: 56),
+              ),
               const SizedBox(height: BrodieSpace.md),
               Text(
                 sending ? 'Sending…' : '$remaining',
@@ -321,7 +323,9 @@ class _Sent extends StatelessWidget {
               detail: alerted
                   ? 'They see your SOS and where you are until you tap "I\'m safe".'
                   : 'No connection right now.',
-              action: alerted ? null : BrodieButton.secondary(label: 'Try again', compact: true, onPressed: onRetryGroup),
+              action: alerted
+                  ? null
+                  : BrodieButton.secondary(label: 'Try again', compact: true, onPressed: onRetryGroup),
             ),
           if (contactsFailed)
             const _Step(
@@ -339,9 +343,7 @@ class _Sent extends StatelessWidget {
           else
             _Step(
               done: textOpened ?? false,
-              title: textOpened == false
-                  ? "Couldn't open your messages app"
-                  : 'Tap Send in your messages app',
+              title: textOpened == false ? "Couldn't open your messages app" : 'Tap Send in your messages app',
               detail: [
                 'The text to ${contacts.length == 1 ? contacts.single.name : '${contacts.length} contacts'} is ready'
                     "${hasLocation ? ' with your location' : ", but your location wasn't available"}.",

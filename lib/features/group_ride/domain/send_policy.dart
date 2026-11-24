@@ -26,16 +26,16 @@ class SendProfile {
   /// Screen on, the normal case. [intervalSeconds] is the user's
   /// broadcast-interval setting (clamped to 3–30 s).
   factory SendProfile.foreground({required int intervalSeconds}) => SendProfile(
-        minInterval: Duration(seconds: intervalSeconds.clamp(3, 30)),
-        minDistanceMeters: 50,
-        heartbeat: const Duration(seconds: 60),
-      );
+    minInterval: Duration(seconds: intervalSeconds.clamp(3, 30)),
+    minDistanceMeters: 50,
+    heartbeat: const Duration(seconds: 60),
+  );
 
   factory SendProfile.batterySaver({required int intervalSeconds}) => SendProfile(
-        minInterval: Duration(seconds: intervalSeconds.clamp(10, 30)),
-        minDistanceMeters: 75,
-        heartbeat: const Duration(seconds: 120),
-      );
+    minInterval: Duration(seconds: intervalSeconds.clamp(10, 30)),
+    minDistanceMeters: 75,
+    heartbeat: const Duration(seconds: 120),
+  );
 
   /// Screen locked: sends go over REST and the rider receives nothing.
   static const background = SendProfile(

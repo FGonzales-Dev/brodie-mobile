@@ -40,7 +40,13 @@ void main() {
       'distance_m': 66184.664,
       'duration_s': 5728.228,
       'maneuvers': [
-        {'instruction': 'Turn right onto Romulo Highway', 'type': 'turn', 'modifier': 'right', 'lng': 120.97, 'lat': 14.3},
+        {
+          'instruction': 'Turn right onto Romulo Highway',
+          'type': 'turn',
+          'modifier': 'right',
+          'lng': 120.97,
+          'lat': 14.3,
+        },
         {'instruction': 'You have arrived', 'type': 'arrive', 'modifier': null, 'lng': 120.962, 'lat': 14.1153},
       ],
     });

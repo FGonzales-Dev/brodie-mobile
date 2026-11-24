@@ -64,17 +64,25 @@ void main() {
         GoRoute(
           path: '/',
           builder: (context, _) => Scaffold(
-            body: TextButton(onPressed: () => context.push('/sos', extra: _lastFix), child: const Text('ride')),
+            body: TextButton(
+              onPressed: () => context.push('/sos', extra: _lastFix),
+              child: const Text('ride'),
+            ),
           ),
         ),
-        GoRoute(path: '/sos', builder: (_, state) => SosScreen(lastFix: state.extra as GeoFix?)),
+        GoRoute(
+          path: '/sos',
+          builder: (_, state) => SosScreen(lastFix: state.extra as GeoFix?),
+        ),
         GoRoute(path: '/profile/emergency-contacts', builder: (_, _) => const Text('contacts screen')),
       ],
     );
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          emergencyContactRepositoryProvider.overrideWithValue(_Contacts(contacts) as OwnedRowsTable<EmergencyContact, EmergencyContactDraft>),
+          emergencyContactRepositoryProvider.overrideWithValue(
+            _Contacts(contacts) as OwnedRowsTable<EmergencyContact, EmergencyContactDraft>,
+          ),
           locationRepositoryProvider.overrideWithValue(_NoFreshFix()),
           myProfileProvider.overrideWith((ref) async => const Profile(id: 'user-1', username: 'alex_rides')),
         ],

@@ -138,94 +138,94 @@ class GroupRepository {
   }
 
   static RideGroup _groupFromRow(Map<String, dynamic> row) => RideGroup(
-        id: row['id'] as String,
-        name: row['name'] as String,
-        inviteCode: row['invite_code'] as String,
-        leaderId: row['leader_id'] as String,
-        createdAt: DateTime.parse(row['created_at'] as String),
-        memberCount: (row['member_count'] as num?)?.toInt() ?? 1,
-        openTripStatus: switch (row['open_trip_status']) {
-          final String status => TripStatus.values.byName(status),
-          _ => null,
-        },
-      );
+    id: row['id'] as String,
+    name: row['name'] as String,
+    inviteCode: row['invite_code'] as String,
+    leaderId: row['leader_id'] as String,
+    createdAt: DateTime.parse(row['created_at'] as String),
+    memberCount: (row['member_count'] as num?)?.toInt() ?? 1,
+    openTripStatus: switch (row['open_trip_status']) {
+      final String status => TripStatus.values.byName(status),
+      _ => null,
+    },
+  );
 
   @visibleForTesting
   static GroupInvitePreview previewFromRow(Map<String, dynamic> row) => _previewFromRow(row);
 
   static GroupInvitePreview _previewFromRow(Map<String, dynamic> row) => GroupInvitePreview(
-        groupId: row['group_id'] as String,
-        name: row['name'] as String,
-        leaderUsername: row['leader_username'] as String?,
-        memberCount: (row['member_count'] as num).toInt(),
-        myStatus: switch (row['my_status']) {
-          final String status => _memberStatusFrom(status),
-          _ => null,
-        },
-      );
+    groupId: row['group_id'] as String,
+    name: row['name'] as String,
+    leaderUsername: row['leader_username'] as String?,
+    memberCount: (row['member_count'] as num).toInt(),
+    myStatus: switch (row['my_status']) {
+      final String status => _memberStatusFrom(status),
+      _ => null,
+    },
+  );
 
   static MemberStatus _memberStatusFrom(String status) => switch (status) {
-        'pending' => MemberStatus.pending,
-        'left' => MemberStatus.left,
-        'fell_behind' => MemberStatus.fellBehind,
-        _ => MemberStatus.joined,
-      };
+    'pending' => MemberStatus.pending,
+    'left' => MemberStatus.left,
+    'fell_behind' => MemberStatus.fellBehind,
+    _ => MemberStatus.joined,
+  };
 
   static GroupMember _memberFromRow(Map<String, dynamic> row) => GroupMember(
-        userId: row['user_id'] as String,
-        username: row['username'] as String?,
-        avatarPath: row['avatar_path'] as String?,
-        role: GroupRole.values.byName(row['role'] as String),
-        status: _memberStatusFrom(row['status'] as String),
-        joinedAt: DateTime.parse(row['joined_at'] as String),
-      );
+    userId: row['user_id'] as String,
+    username: row['username'] as String?,
+    avatarPath: row['avatar_path'] as String?,
+    role: GroupRole.values.byName(row['role'] as String),
+    status: _memberStatusFrom(row['status'] as String),
+    joinedAt: DateTime.parse(row['joined_at'] as String),
+  );
 
   static GroupInvite _inviteFromRow(Map<String, dynamic> row) => GroupInvite(
-        groupId: row['group_id'] as String,
-        groupName: row['group_name'] as String,
-        invitedBy: row['invited_by'] as String?,
-        invitedAt: DateTime.parse(row['invited_at'] as String),
-      );
+    groupId: row['group_id'] as String,
+    groupName: row['group_name'] as String,
+    invitedBy: row['invited_by'] as String?,
+    invitedAt: DateTime.parse(row['invited_at'] as String),
+  );
 
   @visibleForTesting
   static GroupTrip tripFromRow(Map<String, dynamic> row) => GroupTrip(
-        id: row['id'] as String,
-        groupId: row['group_id'] as String,
-        leaderId: row['leader_id'] as String,
-        name: row['name'] as String?,
-        destination: GeoPoint(
-          latitude: (row['destination_lat'] as num).toDouble(),
-          longitude: (row['destination_lng'] as num).toDouble(),
-        ),
-        status: TripStatus.values.byName(row['status'] as String),
-        route: TripRoute(
-          version: (row['route_version'] as num).toInt(),
-          path: PolylineCodec.decode(row['route_polyline6'] as String),
-          distanceMeters: (row['distance_m'] as num).toDouble(),
-          duration: Duration(seconds: (row['duration_s'] as num).toInt()),
-        ),
-        createdAt: DateTime.parse(row['created_at'] as String),
-        startedAt: _parseOptionalDate(row['started_at']),
-      );
+    id: row['id'] as String,
+    groupId: row['group_id'] as String,
+    leaderId: row['leader_id'] as String,
+    name: row['name'] as String?,
+    destination: GeoPoint(
+      latitude: (row['destination_lat'] as num).toDouble(),
+      longitude: (row['destination_lng'] as num).toDouble(),
+    ),
+    status: TripStatus.values.byName(row['status'] as String),
+    route: TripRoute(
+      version: (row['route_version'] as num).toInt(),
+      path: PolylineCodec.decode(row['route_polyline6'] as String),
+      distanceMeters: (row['distance_m'] as num).toDouble(),
+      duration: Duration(seconds: (row['duration_s'] as num).toInt()),
+    ),
+    createdAt: DateTime.parse(row['created_at'] as String),
+    startedAt: _parseOptionalDate(row['started_at']),
+  );
 
   static TripRider _riderFromRow(Map<String, dynamic> row) => TripRider(
-        userId: row['user_id'] as String,
-        username: row['username'] as String?,
-        avatarPath: row['avatar_path'] as String?,
-        seat: (row['seat'] as num).toInt(),
-        isLeader: row['is_leader'] as bool,
-      );
+    userId: row['user_id'] as String,
+    username: row['username'] as String?,
+    avatarPath: row['avatar_path'] as String?,
+    seat: (row['seat'] as num).toInt(),
+    isLeader: row['is_leader'] as bool,
+  );
 
   @visibleForTesting
   static PastGroupRide pastRideFromRow(Map<String, dynamic> row) => PastGroupRide(
-        tripId: row['trip_id'] as String,
-        name: row['name'] as String?,
-        startedAt: DateTime.parse(row['started_at'] as String).toLocal(),
-        endedAt: _parseOptionalDate(row['ended_at'])?.toLocal(),
-        plannedDistanceMeters: (row['planned_distance_m'] as num?)?.toDouble() ?? 0,
-        riderCount: (row['rider_count'] as num).toInt(),
-        myRideId: row['my_ride_id'] as String?,
-      );
+    tripId: row['trip_id'] as String,
+    name: row['name'] as String?,
+    startedAt: DateTime.parse(row['started_at'] as String).toLocal(),
+    endedAt: _parseOptionalDate(row['ended_at'])?.toLocal(),
+    plannedDistanceMeters: (row['planned_distance_m'] as num?)?.toDouble() ?? 0,
+    riderCount: (row['rider_count'] as num).toInt(),
+    myRideId: row['my_ride_id'] as String?,
+  );
 
   @visibleForTesting
   static GroupRideSummary groupRideFromRow(Map<String, dynamic> row) {
@@ -245,18 +245,18 @@ class GroupRepository {
 
   @visibleForTesting
   static GroupRideRider rideRiderFromRow(Map<String, dynamic> row) => GroupRideRider(
-        userId: row['user_id'] as String,
-        username: row['username'] as String?,
-        isLeader: row['is_leader'] as bool,
-        leftEarly: row['left_early'] as bool,
-        distanceMeters: (row['distance_m'] as num?)?.toDouble(),
-        movingTime: switch (row['moving_s']) {
-          final num seconds => Duration(seconds: seconds.toInt()),
-          _ => null,
-        },
-        maxSpeedMps: (row['max_speed_mps'] as num?)?.toDouble(),
-        arrived: row['arrived'] as bool?,
-      );
+    userId: row['user_id'] as String,
+    username: row['username'] as String?,
+    isLeader: row['is_leader'] as bool,
+    leftEarly: row['left_early'] as bool,
+    distanceMeters: (row['distance_m'] as num?)?.toDouble(),
+    movingTime: switch (row['moving_s']) {
+      final num seconds => Duration(seconds: seconds.toInt()),
+      _ => null,
+    },
+    maxSpeedMps: (row['max_speed_mps'] as num?)?.toDouble(),
+    arrived: row['arrived'] as bool?,
+  );
 
   static DateTime? _parseOptionalDate(Object? value) => value == null ? null : DateTime.parse(value as String);
 }

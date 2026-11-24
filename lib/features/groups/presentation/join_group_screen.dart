@@ -71,7 +71,8 @@ class _JoinGroupScreenState extends ConsumerState<JoinGroupScreen> {
             ? EmptyState(
                 icon: Icons.link_off,
                 title: 'Invite not found',
-                message: "The code $_code doesn't match a group. The leader may have reset it; ask them for a new link.",
+                message:
+                    "The code $_code doesn't match a group. The leader may have reset it; ask them for a new link.",
                 action: BrodieButton.secondary(
                   label: 'Enter a code',
                   onPressed: () => context.pushReplacement(Routes.joinWithCode),

@@ -15,9 +15,9 @@ abstract final class AppTheme {
       side: BorderSide(color: c.border, width: BrodieSize.border),
     );
     OutlineInputBorder inputBorder(Color color) => OutlineInputBorder(
-          borderRadius: BrodieSize.borderRadius,
-          borderSide: BorderSide(color: color, width: BrodieSize.border),
-        );
+      borderRadius: BrodieSize.borderRadius,
+      borderSide: BorderSide(color: color, width: BrodieSize.border),
+    );
     WidgetStateProperty<Color> selected(Color on, Color off) =>
         WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? on : off);
 

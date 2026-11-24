@@ -21,10 +21,7 @@ class BrodieListGroup extends StatelessWidget {
       ),
       child: Column(
         children: [
-          for (final (index, child) in children.indexed) ...[
-            if (index > 0) const Divider(),
-            child,
-          ],
+          for (final (index, child) in children.indexed) ...[if (index > 0) const Divider(), child],
         ],
       ),
     );

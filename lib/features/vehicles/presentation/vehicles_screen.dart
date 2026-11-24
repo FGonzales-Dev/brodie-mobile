@@ -28,7 +28,8 @@ class VehiclesScreen extends StatelessWidget {
       ),
       idOf: (vehicle) => vehicle.id,
       titleOf: (vehicle) => vehicle.name,
-      subtitleOf: (vehicle) => vehicle.photoPath == null ? '${vehicle.type.label} · tap the picture to add a photo' : vehicle.type.label,
+      subtitleOf: (vehicle) =>
+          vehicle.photoPath == null ? '${vehicle.type.label} · tap the picture to add a photo' : vehicle.type.label,
       leadingOf: (vehicle) => _VehiclePhoto(vehicle: vehicle),
       formBuilder: (existing) => _VehicleFormSheet(existing: existing),
       afterDelete: (ref, vehicle) => ref.read(vehiclePhotoRepositoryProvider).deleteFileOf(vehicle),
@@ -146,8 +147,13 @@ class _VehiclePhotoState extends ConsumerState<_VehiclePhoto> {
                 ),
               if (_busy)
                 DecoratedBox(
-                  decoration: BoxDecoration(color: colors.background.withValues(alpha: .6), borderRadius: BrodieSize.borderRadius),
-                  child: const Center(child: SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))),
+                  decoration: BoxDecoration(
+                    color: colors.background.withValues(alpha: .6),
+                    borderRadius: BrodieSize.borderRadius,
+                  ),
+                  child: const Center(
+                    child: SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2)),
+                  ),
                 )
               else if (url == null)
                 Align(

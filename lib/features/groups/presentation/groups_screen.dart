@@ -109,7 +109,10 @@ class _InvitesCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(countLabel(invites.length, 'invite'), style: BrodieType.bodyStrong.copyWith(color: colors.textPrimary)),
+                Text(
+                  countLabel(invites.length, 'invite'),
+                  style: BrodieType.bodyStrong.copyWith(color: colors.textPrimary),
+                ),
                 Text(
                   invites.map((invite) => invite.groupName).join(', '),
                   maxLines: 1,

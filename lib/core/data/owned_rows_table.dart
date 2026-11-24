@@ -9,12 +9,7 @@ import '../errors/guard_remote.dart';
 ///
 /// [T] is the domain entity, [D] the user-editable draft.
 class OwnedRowsTable<T, D> {
-  const OwnedRowsTable(
-    this._client, {
-    required this.table,
-    required this.fromRow,
-    required this.toRow,
-  });
+  const OwnedRowsTable(this._client, {required this.table, required this.fromRow, required this.toRow});
 
   final SupabaseClient _client;
   final String table;
@@ -24,9 +19,9 @@ class OwnedRowsTable<T, D> {
   String get _userId => _client.auth.currentUser?.id ?? (throw const UnauthenticatedFailure());
 
   Future<List<T>> fetchMine() => guardRemote(() async {
-        final rows = await _client.from(table).select().eq('user_id', _userId).order('created_at');
-        return rows.map(fromRow).toList();
-      });
+    final rows = await _client.from(table).select().eq('user_id', _userId).order('created_at');
+    return rows.map(fromRow).toList();
+  });
 
   Future<void> insert(D draft) => guardRemote(() => _client.from(table).insert({'user_id': _userId, ...toRow(draft)}));
 

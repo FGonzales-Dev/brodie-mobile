@@ -54,11 +54,7 @@ void _write(String path, {required img.Color background, required double arrowSh
   final ys = rotated.map((p) => p.$2);
   final shiftX = big / 2 - (xs.reduce(math.min) + xs.reduce(math.max)) / 2;
   final shiftY = big / 2 - (ys.reduce(math.min) + ys.reduce(math.max)) / 2;
-  img.fillPolygon(
-    canvas,
-    vertices: [for (final (x, y) in rotated) img.Point(x + shiftX, y + shiftY)],
-    color: _black,
-  );
+  img.fillPolygon(canvas, vertices: [for (final (x, y) in rotated) img.Point(x + shiftX, y + shiftY)], color: _black);
 
   final icon = img.copyResize(canvas, width: _size, height: _size, interpolation: img.Interpolation.average);
   File(path)

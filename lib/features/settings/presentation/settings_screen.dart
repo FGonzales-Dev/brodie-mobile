@@ -80,8 +80,7 @@ class SettingsScreen extends ConsumerWidget {
                   max: 30,
                   divisions: 27,
                   label: '${settings.broadcastIntervalSeconds} s',
-                  onChanged: (value) =>
-                      controller.update((s) => s.copyWith(broadcastIntervalSeconds: value.round())),
+                  onChanged: (value) => controller.update((s) => s.copyWith(broadcastIntervalSeconds: value.round())),
                 ),
                 BrodieListTile(
                   title: 'Battery saver',
@@ -100,11 +99,11 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   static String _describe(LocationAccess? access) => switch (access) {
-        null => 'Checking…',
-        LocationAccess.always => 'Always allowed',
-        LocationAccess.whileInUse => 'While using the app',
-        LocationAccess.denied => 'Not allowed yet',
-        LocationAccess.deniedForever => 'Blocked. Allow it in system settings',
-        LocationAccess.serviceDisabled => 'Location services are off',
-      };
+    null => 'Checking…',
+    LocationAccess.always => 'Always allowed',
+    LocationAccess.whileInUse => 'While using the app',
+    LocationAccess.denied => 'Not allowed yet',
+    LocationAccess.deniedForever => 'Blocked. Allow it in system settings',
+    LocationAccess.serviceDisabled => 'Location services are off',
+  };
 }

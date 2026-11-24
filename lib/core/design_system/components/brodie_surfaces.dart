@@ -140,7 +140,9 @@ class StatTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FittedBox(child: Text(value, style: BrodieType.stat.copyWith(color: colors.textPrimary))),
+          FittedBox(
+            child: Text(value, style: BrodieType.stat.copyWith(color: colors.textPrimary)),
+          ),
           const SizedBox(height: 2),
           Text(unit.toUpperCase(), style: BrodieType.overline.copyWith(color: colors.textSecondary)),
         ],

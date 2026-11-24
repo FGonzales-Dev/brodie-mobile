@@ -23,16 +23,18 @@ class HistoryTotalsLine extends ConsumerWidget {
       null => ' ',
       (count: 0, distanceMeters: _, movingTime: _) => filter.activeCount > 0 ? 'No matching rides' : ' ',
       (:final count, :final distanceMeters, :final movingTime) => [
-          '$count ${count == 1 ? 'ride' : 'rides'}',
-          formatDistance(distanceMeters, units).text,
-          '${formatDuration(movingTime).text} riding',
-        ].join(' · '),
+        '$count ${count == 1 ? 'ride' : 'rides'}',
+        formatDistance(distanceMeters, units).text,
+        '${formatDuration(movingTime).text} riding',
+      ].join(' · '),
     };
     return Padding(
       padding: const EdgeInsets.fromLTRB(BrodieSpace.md, 0, BrodieSpace.xs, BrodieSpace.xs),
       child: Row(
         children: [
-          Expanded(child: Text(text, style: BrodieType.caption.copyWith(color: colors.textSecondary))),
+          Expanded(
+            child: Text(text, style: BrodieType.caption.copyWith(color: colors.textSecondary)),
+          ),
           if (!filter.isDefault)
             TextButton(onPressed: ref.read(rideFilterControllerProvider.notifier).clear, child: const Text('Clear')),
         ],
@@ -54,15 +56,15 @@ class HistoryFilterSheet extends ConsumerWidget {
     final controller = ref.read(rideFilterControllerProvider.notifier);
 
     Widget chip(String label, bool selected, VoidCallback onTap) => ChoiceChip(
-          label: Text(label),
-          selected: selected,
-          onSelected: (_) => onTap(),
-          showCheckmark: false,
-          selectedColor: colors.accent,
-          labelStyle: BrodieType.bodyStrong.copyWith(color: selected ? colors.onAccent : colors.textPrimary),
-          side: BorderSide(color: selected ? colors.accent : colors.border),
-          shape: const RoundedRectangleBorder(borderRadius: BrodieSize.borderRadius),
-        );
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      showCheckmark: false,
+      selectedColor: colors.accent,
+      labelStyle: BrodieType.bodyStrong.copyWith(color: selected ? colors.onAccent : colors.textPrimary),
+      side: BorderSide(color: selected ? colors.accent : colors.border),
+      shape: const RoundedRectangleBorder(borderRadius: BrodieSize.borderRadius),
+    );
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -77,7 +79,11 @@ class HistoryFilterSheet extends ConsumerWidget {
               runSpacing: BrodieSpace.xs,
               children: [
                 for (final period in RidePeriod.values)
-                  chip(period.label, filter.period == period, () => controller.update((f) => f.copyWith(period: period))),
+                  chip(
+                    period.label,
+                    filter.period == period,
+                    () => controller.update((f) => f.copyWith(period: period)),
+                  ),
               ],
             ),
             if (vehicles.isNotEmpty) ...[
@@ -111,8 +117,7 @@ class HistoryFilterSheet extends ConsumerWidget {
             ),
             const SizedBox(height: BrodieSpace.sm),
             BrodieButton(label: 'Done', icon: Icons.check, onPressed: () => Navigator.pop(context)),
-            if (!filter.isDefault)
-              TextButton(onPressed: controller.clear, child: const Text('Clear all')),
+            if (!filter.isDefault) TextButton(onPressed: controller.clear, child: const Text('Clear all')),
           ],
         ),
       ),

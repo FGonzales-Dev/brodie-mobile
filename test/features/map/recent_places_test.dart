@@ -8,10 +8,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Place place(int n) => Place(
-      name: 'Place $n',
-      address: 'Street $n',
-      location: GeoPoint(latitude: 14 + n / 100, longitude: 120 + n / 100),
-    );
+  name: 'Place $n',
+  address: 'Street $n',
+  location: GeoPoint(latitude: 14 + n / 100, longitude: 120 + n / 100),
+);
 
 void main() {
   late SharedPreferences prefs;
@@ -23,10 +23,12 @@ void main() {
 
   /// A fresh app session for [userId] over the same device storage.
   RecentPlacesController controllerFor(String userId) {
-    final container = ProviderContainer(overrides: [
-      sharedPreferencesProvider.overrideWithValue(prefs),
-      currentUserProvider.overrideWithValue(AppUser(id: userId)),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        currentUserProvider.overrideWithValue(AppUser(id: userId)),
+      ],
+    );
     addTearDown(container.dispose);
     container.listen(recentPlacesControllerProvider, (_, _) {});
     return container.read(recentPlacesControllerProvider.notifier);

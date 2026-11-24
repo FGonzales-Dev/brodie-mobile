@@ -105,11 +105,16 @@ abstract class GroupRideState with _$GroupRideState {
 
   bool get ended => end != null;
 
-  List<LiveRider> get behind => [for (final rider in others) if (rider.behind) rider];
+  List<LiveRider> get behind => [
+    for (final rider in others)
+      if (rider.behind) rider,
+  ];
 
   /// Riders whose SOS is on, earliest first.
-  List<LiveRider> get sos => [for (final rider in others) if (rider.sosAt != null) rider]
-    ..sort((a, b) => a.sosAt!.compareTo(b.sosAt!));
+  List<LiveRider> get sos => [
+    for (final rider in others)
+      if (rider.sosAt != null) rider,
+  ]..sort((a, b) => a.sosAt!.compareTo(b.sosAt!));
 }
 
 /// The clock the ride reads; tests replace it.
@@ -309,7 +314,9 @@ class GroupRideController extends _$GroupRideController {
     if (known == null) {
       // Someone joined after this phone loaded the roster. Show them now;
       // their name arrives with the roster.
-      _others[fix.seat] = LiveRider(rider: TripRider(userId: '', seat: fix.seat, isLeader: false));
+      _others[fix.seat] = LiveRider(
+        rider: TripRider(userId: '', seat: fix.seat, isLeader: false),
+      );
       unawaited(_refreshRoster());
     }
     final rider = _others[fix.seat]!;
@@ -325,7 +332,9 @@ class GroupRideController extends _$GroupRideController {
   void _onRiderSos(SosSignal signal, GroupRideState current) {
     if (signal.seat == current.me.seat) return;
     if (!_others.containsKey(signal.seat)) {
-      _others[signal.seat] = LiveRider(rider: TripRider(userId: '', seat: signal.seat, isLeader: false));
+      _others[signal.seat] = LiveRider(
+        rider: TripRider(userId: '', seat: signal.seat, isLeader: false),
+      );
       unawaited(_refreshRoster());
     }
     final rider = _others[signal.seat]!;
@@ -368,8 +377,7 @@ class GroupRideController extends _$GroupRideController {
     final myAlong = _alongBySeat[mySeat];
 
     final progress = <int, RiderProgress>{
-      if (myAlong != null)
-        mySeat: (alongRouteMeters: myAlong, speedMps: _speedMps(next.lastFix), lastHeardAt: now),
+      if (myAlong != null) mySeat: (alongRouteMeters: myAlong, speedMps: _speedMps(next.lastFix), lastHeardAt: now),
       for (final MapEntry(key: seat, value: rider) in _others.entries)
         if ((rider.fix, rider.heardAt, _alongBySeat[seat]) case (final fix?, final heardAt?, final along?))
           seat: (alongRouteMeters: along, speedMps: fix.speedKmh / 3.6, lastHeardAt: heardAt),
@@ -393,13 +401,14 @@ class GroupRideController extends _$GroupRideController {
     return speed.isFinite && speed > 0 ? speed : 0;
   }
 
-  List<LiveRider> _sortedOthers() => [
-        for (final seat in _others.keys.toList()..sort()) _others[seat]!,
-      ];
+  List<LiveRider> _sortedOthers() => [for (final seat in _others.keys.toList()..sort()) _others[seat]!];
 
   /// Keeps what's known about riders still on the trip; drops riders who left.
   void _setRoster(List<TripRider> roster, {required int mySeat}) {
-    final onTrip = {for (final rider in roster) if (rider.seat != mySeat) rider.seat: rider};
+    final onTrip = {
+      for (final rider in roster)
+        if (rider.seat != mySeat) rider.seat: rider,
+    };
     _others.removeWhere((seat, _) => !onTrip.containsKey(seat));
     _alongBySeat.removeWhere((seat, _) => seat != mySeat && !onTrip.containsKey(seat));
     for (final MapEntry(key: seat, value: rider) in onTrip.entries) {

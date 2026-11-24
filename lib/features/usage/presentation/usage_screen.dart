@@ -51,8 +51,8 @@ class _UsageCard extends StatelessWidget {
     final gaugeColor = available == 0
         ? colors.danger
         : fraction <= .2
-            ? colors.warning
-            : colors.primaryAction;
+        ? colors.warning
+        : colors.primaryAction;
     final resetsAt = clockLabel(context, usage.resetsAt);
 
     return BrodieCard(

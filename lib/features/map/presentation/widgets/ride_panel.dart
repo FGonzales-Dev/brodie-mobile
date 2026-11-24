@@ -23,7 +23,11 @@ class RidePanel extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.all(BrodieSpace.md),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
         ),
       ),
     );

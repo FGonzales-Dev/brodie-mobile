@@ -48,13 +48,15 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     repository = _CountingSearchRepository();
-    final container = ProviderContainer(overrides: [
-      placeSearchRepositoryProvider.overrideWithValue(repository),
-      sharedPreferencesProvider.overrideWithValue(prefs),
-      myLocationControllerProvider.overrideWith(
-        () => _FixedLocationController(fixAt(riderPosition, DateTime(2026, 10, 29))),
-      ),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        placeSearchRepositoryProvider.overrideWithValue(repository),
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        myLocationControllerProvider.overrideWith(
+          () => _FixedLocationController(fixAt(riderPosition, DateTime(2026, 10, 29))),
+        ),
+      ],
+    );
     addTearDown(container.dispose);
     // The home map keeps its fetched position alive underneath the search screen.
     container.listen(myLocationControllerProvider, (_, _) {});

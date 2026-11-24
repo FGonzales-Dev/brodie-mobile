@@ -137,13 +137,21 @@ void main() {
   });
 
   testWidgets('signed-in users without a username must pick one first', (tester) async {
-    await _pumpApp(tester, user: user, profile: const Profile(id: 'user-1'));
+    await _pumpApp(
+      tester,
+      user: user,
+      profile: const Profile(id: 'user-1'),
+    );
 
     expect(find.text('PICK YOUR HANDLE.'), findsOneWidget);
   });
 
   testWidgets('users with a username reach the tabbed app', (tester) async {
-    await _pumpApp(tester, user: user, profile: const Profile(id: 'user-1', username: 'alex_rides'));
+    await _pumpApp(
+      tester,
+      user: user,
+      profile: const Profile(id: 'user-1', username: 'alex_rides'),
+    );
 
     for (final tab in ['MAP', 'GROUPS', 'HISTORY', 'PROFILE']) {
       expect(find.text(tab), findsOneWidget);

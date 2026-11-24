@@ -29,12 +29,12 @@ AppFailure mapToFailure(Object error) {
 
 /// Edge Functions answer with plain HTTP statuses (see brodie-supabase).
 AppFailure _fromFunctionStatus(int status) => switch (status) {
-      401 => const UnauthenticatedFailure(),
-      404 => const NotFoundFailure(),
-      429 => const RateLimitedFailure(),
-      502 || 503 || 504 => const NetworkFailure('The service is temporarily unavailable. Try again shortly.'),
-      _ => const UnknownFailure(),
-    };
+  401 => const UnauthenticatedFailure(),
+  404 => const NotFoundFailure(),
+  429 => const RateLimitedFailure(),
+  502 || 503 || 504 => const NetworkFailure('The service is temporarily unavailable. Try again shortly.'),
+  _ => const UnknownFailure(),
+};
 
 // Codes: https://www.postgresql.org/docs/current/errcodes-appendix.html
 AppFailure _fromPostgrest(String? code, String message) {

@@ -68,7 +68,9 @@ class RiderMarkers {
       for (final (:rider, :at) in placed)
         PointAnnotationOptions(
           geometry: Point(coordinates: positionOf(at)),
-          textField: rider.sosAt != null ? 'SOS @${rider.rider.username ?? 'rider'}' : '@${rider.rider.username ?? 'rider'}',
+          textField: rider.sosAt != null
+              ? 'SOS @${rider.rider.username ?? 'rider'}'
+              : '@${rider.rider.username ?? 'rider'}',
           textSize: 12,
           textOffset: [0, 1.4],
           textAnchor: TextAnchor.TOP,
@@ -81,9 +83,9 @@ class RiderMarkers {
 
   /// Also used by the rider list, so a rider looks the same in both.
   static Color colorFor(LiveRider rider, BrodieColors colors) => switch (rider.status) {
-        _ when rider.sosAt != null => colors.danger,
-        RiderStatus.live => colors.success,
-        RiderStatus.stale => colors.warning,
-        RiderStatus.lost || null => colors.textSecondary,
-      };
+    _ when rider.sosAt != null => colors.danger,
+    RiderStatus.live => colors.success,
+    RiderStatus.stale => colors.warning,
+    RiderStatus.lost || null => colors.textSecondary,
+  };
 }

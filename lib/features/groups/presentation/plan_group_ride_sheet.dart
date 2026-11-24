@@ -56,7 +56,10 @@ class _LedGroupsSheet extends ConsumerWidget {
               value: ref.watch(myGroupsProvider),
               onRetry: () => ref.invalidate(myGroupsProvider),
               data: (groups) {
-                final led = [for (final group in groups) if (group.leaderId == me) group];
+                final led = [
+                  for (final group in groups)
+                    if (group.leaderId == me) group,
+                ];
                 if (led.isEmpty) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -87,8 +90,8 @@ class _LedGroupsSheet extends ConsumerWidget {
                         subtitle: group.openTripStatus == null
                             ? countLabel(group.memberCount, 'rider')
                             : group.openTripStatus == TripStatus.active
-                                ? 'Riding now'
-                                : 'Already has a ride planned',
+                            ? 'Riding now'
+                            : 'Already has a ride planned',
                         onTap: group.openTripStatus == null ? () => Navigator.of(context).pop(group.id) : null,
                       ),
                   ],

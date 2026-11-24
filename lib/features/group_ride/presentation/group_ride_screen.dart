@@ -121,7 +121,9 @@ class _GroupRideScreenState extends ConsumerState<GroupRideScreen> {
     setState(() => _following = false);
     await map.flyTo(
       CameraOptions(
-        center: Point(coordinates: positionOf(GeoPoint(latitude: fix.latitude, longitude: fix.longitude))),
+        center: Point(
+          coordinates: positionOf(GeoPoint(latitude: fix.latitude, longitude: fix.longitude)),
+        ),
         zoom: 15,
         bearing: 0,
         pitch: 0,
@@ -268,19 +270,16 @@ class _GroupRideScreenState extends ConsumerState<GroupRideScreen> {
                     RideMapButtons(
                       leading: ride.ended
                           ? null
-                          : SosButton(onPressed: () => context.push(Routes.sosFor(widget.groupId), extra: ride.lastFix)),
+                          : SosButton(
+                              onPressed: () => context.push(Routes.sosFor(widget.groupId), extra: ride.lastFix),
+                            ),
                       following: _following,
                       onFollow: () => setState(() => _following = true),
                     ),
                     if (ride.ended)
                       GroupRideEndedPanel(ride: ride, onDone: _done)
                     else
-                      GroupRideHud(
-                        ride: ride,
-                        busy: _busy,
-                        onRiderTap: _showRider,
-                        onEndOrLeave: _confirmEndOrLeave,
-                      ),
+                      GroupRideHud(ride: ride, busy: _busy, onRiderTap: _showRider, onEndOrLeave: _confirmEndOrLeave),
                   ],
                 ),
               ),

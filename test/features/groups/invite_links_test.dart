@@ -14,8 +14,11 @@ void main() {
 
   test('reads the code out of a pasted invite link', () {
     expect(InviteLinks.codeFrom('https://${InviteLinks.host}/join/7a879d'), '7A879D');
-    expect(InviteLinks.codeFrom('Join us! https://${InviteLinks.host}/join/7A879D'), isNull,
-        reason: 'only a bare link or code is accepted');
+    expect(
+      InviteLinks.codeFrom('Join us! https://${InviteLinks.host}/join/7A879D'),
+      isNull,
+      reason: 'only a bare link or code is accepted',
+    );
   });
 
   test('rejects things that are not invite codes or links', () {

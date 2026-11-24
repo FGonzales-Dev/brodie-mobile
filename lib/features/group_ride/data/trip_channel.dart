@@ -108,7 +108,9 @@ class SupabaseTripChannel implements TripChannel {
             case RealtimeSubscribeStatus.channelError || RealtimeSubscribeStatus.timedOut:
               _setConnected(false);
               // The client keeps retrying; only the first failure is reported.
-              if (!joined.isCompleted) joined.completeError(error ?? TimeoutException('Could not join the ride channel'));
+              if (!joined.isCompleted) {
+                joined.completeError(error ?? TimeoutException('Could not join the ride channel'));
+              }
             case RealtimeSubscribeStatus.closed:
               _setConnected(false);
           }
@@ -131,9 +133,9 @@ class SupabaseTripChannel implements TripChannel {
   }
 
   static Set<int> _onlineSeats(RealtimeChannel channel) => {
-        for (final state in channel.presenceState())
-          if (int.tryParse(state.key) case final int seat) seat,
-      };
+    for (final state in channel.presenceState())
+      if (int.tryParse(state.key) case final int seat) seat,
+  };
 
   @override
   Future<void> sendFix(RiderFix fix, {bool viaRest = false}) async {

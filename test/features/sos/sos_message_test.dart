@@ -69,7 +69,11 @@ void main() {
     });
 
     test('a broken position keeps the alert', () {
-      final decoded = PositionCodec.decodeSos({'s': 1, 'on': true, 'a': ['bad']})!;
+      final decoded = PositionCodec.decodeSos({
+        's': 1,
+        'on': true,
+        'a': ['bad'],
+      })!;
       expect(decoded.active, isTrue);
       expect(decoded.fix, isNull);
     });

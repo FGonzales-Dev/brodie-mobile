@@ -60,23 +60,23 @@ class _LocationGate extends ConsumerWidget {
     final controller = ref.read(locationAccessControllerProvider.notifier);
     final (title, message, actionLabel, onPressed) = switch (access) {
       LocationAccess.deniedForever => (
-          'Location blocked',
-          'Allow location for Brodie in system settings so we can show where you are and plan routes.',
-          'Open settings',
-          controller.openSystemSettings,
-        ),
+        'Location blocked',
+        'Allow location for Brodie in system settings so we can show where you are and plan routes.',
+        'Open settings',
+        controller.openSystemSettings,
+      ),
       LocationAccess.serviceDisabled => (
-          'Location is off',
-          'Turn on location services to see where you are and plan routes.',
-          'Turn on location',
-          controller.openSystemSettings,
-        ),
+        'Location is off',
+        'Turn on location services to see where you are and plan routes.',
+        'Turn on location',
+        controller.openSystemSettings,
+      ),
       _ => (
-          'Location needed',
-          'Brodie uses your location while the app is open to show where you are and route you to your destination.',
-          'Allow location',
-          controller.request,
-        ),
+        'Location needed',
+        'Brodie uses your location while the app is open to show where you are and route you to your destination.',
+        'Allow location',
+        controller.request,
+      ),
     };
     return SafeArea(
       child: EmptyState(
@@ -119,10 +119,10 @@ class _MapViewState extends ConsumerState<_MapView> {
   OverviewViewportState? _routeOverview;
 
   ViewportState get _viewport => switch (_cameraMode) {
-        _CameraMode.myPosition => _myPositionView ?? _startingView!,
-        _CameraMode.routeOverview => _routeOverview ?? _myPositionView ?? _startingView!,
-        _CameraMode.free => const IdleViewportState(),
-      };
+    _CameraMode.myPosition => _myPositionView ?? _startingView!,
+    _CameraMode.routeOverview => _routeOverview ?? _myPositionView ?? _startingView!,
+    _CameraMode.free => const IdleViewportState(),
+  };
 
   void _onPlanChanged(RidePlanState plan) {
     _render(plan);
@@ -160,7 +160,10 @@ class _MapViewState extends ConsumerState<_MapView> {
   /// The best position known before a fresh fix, or the whole world.
   static CameraViewportState _viewAt(GeoPoint? center) => center == null
       ? CameraViewportState(center: Point(coordinates: Position(0, 20)), zoom: 1.2)
-      : CameraViewportState(center: Point(coordinates: positionOf(center)), zoom: _zoom);
+      : CameraViewportState(
+          center: Point(coordinates: positionOf(center)),
+          zoom: _zoom,
+        );
 
   Future<void> _onMapCreated(MapboxMap map) async {
     // The live location puck stays off on the home map; the rider's position

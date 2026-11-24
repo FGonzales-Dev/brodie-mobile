@@ -164,16 +164,16 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
       ),
       bottomNavigationBar: switch (lobby.value) {
         final GroupLobby lobby => _LobbyActions(
-            lobby: lobby,
-            isLeader: isLeader,
-            joined: lobby.riders.any((rider) => rider.userId == me),
-            busy: _busy,
-            onStart: _start,
-            onCancel: _cancel,
-            onJoin: _join,
-            onLeave: _leave,
-            onOpenRide: _openRide,
-          ),
+          lobby: lobby,
+          isLeader: isLeader,
+          joined: lobby.riders.any((rider) => rider.userId == me),
+          busy: _busy,
+          onStart: _start,
+          onCancel: _cancel,
+          onJoin: _join,
+          onLeave: _leave,
+          onOpenRide: _openRide,
+        ),
         _ => null,
       },
     );
@@ -199,14 +199,15 @@ class _Lobby extends ConsumerWidget {
 
     final joinedIds = {for (final rider in riders) rider.userId};
     final members = ref.watch(groupMembersControllerProvider(groupId)).value ?? const [];
-    final notJoined = [for (final member in members) if (!joinedIds.contains(member.userId)) member];
+    final notJoined = [
+      for (final member in members)
+        if (!joinedIds.contains(member.userId)) member,
+    ];
 
     final String status;
     if (active) {
       final startedAt = trip.startedAt;
-      final time = startedAt == null
-          ? null
-          : clockLabel(context, startedAt);
+      final time = startedAt == null ? null : clockLabel(context, startedAt);
       status = time == null ? 'Riding now' : 'Riding now · started $time';
     } else {
       status = leader == null || leader.userId == me
@@ -235,9 +236,15 @@ class _Lobby extends ConsumerWidget {
               const SizedBox(height: BrodieSpace.sm),
               Row(
                 children: [
-                  Icon(active ? Icons.sports_motorsports : Icons.hourglass_top, size: 18, color: active ? colors.success : colors.accent),
+                  Icon(
+                    active ? Icons.sports_motorsports : Icons.hourglass_top,
+                    size: 18,
+                    color: active ? colors.success : colors.accent,
+                  ),
                   const SizedBox(width: BrodieSpace.xs),
-                  Expanded(child: Text(status, style: BrodieType.bodyStrong.copyWith(color: colors.textPrimary))),
+                  Expanded(
+                    child: Text(status, style: BrodieType.bodyStrong.copyWith(color: colors.textPrimary)),
+                  ),
                 ],
               ),
               SectionLabel('Riders (${riders.length})'),
@@ -245,7 +252,11 @@ class _Lobby extends ConsumerWidget {
                 children: [
                   for (final rider in riders)
                     BrodieListTile(
-                      leading: UserAvatar(name: rider.username ?? '?', avatarPath: rider.avatarPath, highlighted: rider.userId == me),
+                      leading: UserAvatar(
+                        name: rider.username ?? '?',
+                        avatarPath: rider.avatarPath,
+                        highlighted: rider.userId == me,
+                      ),
                       title: '@${rider.username ?? 'rider'}',
                       subtitle: switch ((rider.isLeader, rider.userId == me)) {
                         (true, true) => 'Leader · You',
@@ -303,11 +314,17 @@ class _LobbyActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final planned = lobby.trip.status == TripStatus.planned;
-    final openRide = BrodieButton(label: 'Open ride', icon: Icons.sports_motorsports, onPressed: busy ? null : onOpenRide);
+    final openRide = BrodieButton(
+      label: 'Open ride',
+      icon: Icons.sports_motorsports,
+      onPressed: busy ? null : onOpenRide,
+    );
     final buttons = <Widget>[
       if (isLeader) ...[
         BrodieButton.secondary(label: 'Cancel ride', onPressed: busy ? null : onCancel),
-        planned ? BrodieButton(label: 'Start ride', icon: Icons.flag_outlined, isLoading: busy, onPressed: onStart) : openRide,
+        planned
+            ? BrodieButton(label: 'Start ride', icon: Icons.flag_outlined, isLoading: busy, onPressed: onStart)
+            : openRide,
       ] else if (joined) ...[
         BrodieButton.secondary(label: 'Leave ride', isLoading: busy, onPressed: onLeave),
         if (!planned) openRide,

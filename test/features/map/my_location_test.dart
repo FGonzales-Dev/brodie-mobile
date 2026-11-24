@@ -27,10 +27,12 @@ void main() {
       if (saved != null) ...{'map.last_latitude': saved.latitude, 'map.last_longitude': saved.longitude},
     });
     final prefs = await SharedPreferences.getInstance();
-    final container = ProviderContainer(overrides: [
-      sharedPreferencesProvider.overrideWithValue(prefs),
-      locationRepositoryProvider.overrideWithValue(_CachedLocationRepository(cached)),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        locationRepositoryProvider.overrideWithValue(_CachedLocationRepository(cached)),
+      ],
+    );
     addTearDown(container.dispose);
     return container;
   }

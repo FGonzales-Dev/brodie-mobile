@@ -142,7 +142,11 @@ class _UploadStatus extends ConsumerWidget {
       padding: const EdgeInsets.only(top: BrodieSpace.sm),
       child: Row(
         children: [
-          Icon(waiting ? Icons.cloud_off : Icons.cloud_done, size: 20, color: waiting ? colors.warning : colors.success),
+          Icon(
+            waiting ? Icons.cloud_off : Icons.cloud_done,
+            size: 20,
+            color: waiting ? colors.warning : colors.success,
+          ),
           const SizedBox(width: BrodieSpace.xs),
           Expanded(
             child: Text(

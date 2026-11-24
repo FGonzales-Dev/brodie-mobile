@@ -56,11 +56,7 @@ class _ChooseUsernameScreenState extends ConsumerState<ChooseUsernameScreen> {
               validator: (_) => state.isAvailable == true ? null : 'Choose an available username',
             ),
             const SizedBox(height: BrodieSpace.lg),
-            BrodieButton(
-              label: 'Continue',
-              isLoading: state.isSubmitting,
-              onPressed: canSubmit ? _submit : null,
-            ),
+            BrodieButton(label: 'Continue', isLoading: state.isSubmitting, onPressed: canSubmit ? _submit : null),
           ],
         ),
       ),

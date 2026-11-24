@@ -37,11 +37,11 @@ class VehiclePhotoRepository {
 
   /// Uploads [jpeg] as [vehicle]'s photo, then removes the old one.
   Future<void> setPhoto(Vehicle vehicle, Uint8List jpeg) => _photos.replace(
-        PhotoBucket.vehicles,
-        jpeg,
-        save: (path) => _setPath(vehicle.id, path),
-        replaces: vehicle.photoPath,
-      );
+    PhotoBucket.vehicles,
+    jpeg,
+    save: (path) => _setPath(vehicle.id, path),
+    replaces: vehicle.photoPath,
+  );
 
   Future<void> removePhoto(Vehicle vehicle) async {
     final old = vehicle.photoPath;

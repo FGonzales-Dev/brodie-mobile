@@ -81,10 +81,10 @@ class _OfflineNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BrodieAlert(
-        icon: Icons.wifi_off,
-        color: context.colors.warning,
-        message: "No connection. Other riders' positions are from before it dropped; yours is still sent when possible.",
-      );
+    icon: Icons.wifi_off,
+    color: context.colors.warning,
+    message: "No connection. Other riders' positions are from before it dropped; yours is still sent when possible.",
+  );
 }
 
 class _SosAlert extends ConsumerWidget {
@@ -120,11 +120,11 @@ class _MySosAlert extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BrodieAlert(
-        icon: Icons.sos,
-        color: context.colors.danger,
-        message: 'Your SOS is on. Your group sees where you are.',
-        action: ("I'm safe", onImSafe),
-      );
+    icon: Icons.sos,
+    color: context.colors.danger,
+    message: 'Your SOS is on. Your group sees where you are.',
+    action: ("I'm safe", onImSafe),
+  );
 }
 
 class _BehindAlert extends ConsumerWidget {
@@ -162,10 +162,7 @@ class RiderStrip extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final units = ref.watch(settingsControllerProvider.select((settings) => settings.units));
     if (riders.isEmpty) {
-      return Text(
-        'Nobody else has joined yet.',
-        style: BrodieType.body.copyWith(color: context.colors.textSecondary),
-      );
+      return Text('Nobody else has joined yet.', style: BrodieType.body.copyWith(color: context.colors.textSecondary));
     }
     return SizedBox(
       height: 56,
@@ -269,16 +266,27 @@ class GroupRideHud extends ConsumerWidget {
         const SizedBox(height: BrodieSpace.sm),
         Row(
           children: [
-            Expanded(child: StatTile(value: speed.value, unit: speed.unit)),
+            Expanded(
+              child: StatTile(value: speed.value, unit: speed.unit),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: remaining.value, unit: '${remaining.unit} left')),
+            Expanded(
+              child: StatTile(value: remaining.value, unit: '${remaining.unit} left'),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: arrival, unit: 'arrive')),
+            Expanded(
+              child: StatTile(value: arrival, unit: 'arrive'),
+            ),
           ],
         ),
         const SizedBox(height: BrodieSpace.sm),
         ride.isLeader
-            ? BrodieButton.secondary(label: 'End ride for everyone', icon: Icons.stop, isLoading: busy, onPressed: onEndOrLeave)
+            ? BrodieButton.secondary(
+                label: 'End ride for everyone',
+                icon: Icons.stop,
+                isLoading: busy,
+                onPressed: onEndOrLeave,
+              )
             : BrodieButton.secondary(label: 'Leave ride', icon: Icons.logout, isLoading: busy, onPressed: onEndOrLeave),
       ],
     );
@@ -326,11 +334,17 @@ class GroupRideEndedPanel extends ConsumerWidget {
         const SizedBox(height: BrodieSpace.md),
         Row(
           children: [
-            Expanded(child: StatTile(value: ridden.value, unit: '${ridden.unit} ridden')),
+            Expanded(
+              child: StatTile(value: ridden.value, unit: '${ridden.unit} ridden'),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: rideTime.value, unit: rideTime.unit)),
+            Expanded(
+              child: StatTile(value: rideTime.value, unit: rideTime.unit),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: clockLabel(context, endedAt), unit: 'ended')),
+            Expanded(
+              child: StatTile(value: clockLabel(context, endedAt), unit: 'ended'),
+            ),
           ],
         ),
         const SizedBox(height: BrodieSpace.sm),

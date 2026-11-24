@@ -24,7 +24,9 @@ class BrodieBottomNav extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surface,
-        border: Border(top: BorderSide(color: colors.border, width: BrodieSize.border)),
+        border: Border(
+          top: BorderSide(color: colors.border, width: BrodieSize.border),
+        ),
       ),
       child: SafeArea(
         top: false,
@@ -33,7 +35,9 @@ class BrodieBottomNav extends StatelessWidget {
           child: Row(
             children: [
               for (final (index, item) in items.indexed)
-                Expanded(child: _NavTab(item: item, selected: index == currentIndex, onTap: () => onSelected(index))),
+                Expanded(
+                  child: _NavTab(item: item, selected: index == currentIndex, onTap: () => onSelected(index)),
+                ),
             ],
           ),
         ),

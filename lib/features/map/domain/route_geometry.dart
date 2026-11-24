@@ -44,9 +44,9 @@ class RouteGeometry {
     // the scale of one route segment.
     final metersPerRadianLng = math.cos(_radians(point.latitude)) * _earthRadiusMeters;
     (double, double) toXY(GeoPoint p) => (
-          _radians(p.longitude - point.longitude) * metersPerRadianLng,
-          _radians(p.latitude - point.latitude) * _earthRadiusMeters,
-        );
+      _radians(p.longitude - point.longitude) * metersPerRadianLng,
+      _radians(p.latitude - point.latitude) * _earthRadiusMeters,
+    );
 
     var bestDistance = double.infinity;
     var bestAlong = 0.0;

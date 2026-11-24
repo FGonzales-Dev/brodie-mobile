@@ -27,7 +27,8 @@ class LegalSection {
 const privacyPolicy = LegalDocument(
   title: 'Privacy policy',
   updated: 'November 26, 2026',
-  intro: 'Brodie is an app for riding with a group. This explains what it stores about you, who can see it, '
+  intro:
+      'Brodie is an app for riding with a group. This explains what it stores about you, who can see it, '
       'and how to delete it. In short: your location is only shared with the riders on a group ride while '
       "that ride is on, it isn't stored, and nothing about you is sold or used for ads.",
   sections: [
@@ -93,9 +94,7 @@ const privacyPolicy = LegalDocument(
       'Brodie shows no ads, doesn\'t sell or rent your data, and doesn\'t use third-party analytics or '
           'tracking.',
     ]),
-    LegalSection('Children', [
-      'Brodie is not meant for children under 13.',
-    ]),
+    LegalSection('Children', ['Brodie is not meant for children under 13.']),
     LegalSection('Changes and questions', [
       'If this policy changes, the new version will appear here with a new date. For questions about your '
           'data, contact the person who runs Brodie for your group.',
@@ -145,8 +144,6 @@ const termsOfUse = LegalDocument(
       'You can stop using Brodie and delete your account at any time from your profile. An account that '
           'breaks these terms may be removed.',
     ]),
-    LegalSection('Changes', [
-      'If these terms change, the new version will appear here with a new date.',
-    ]),
+    LegalSection('Changes', ['If these terms change, the new version will appear here with a new date.']),
   ],
 );

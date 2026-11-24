@@ -7,10 +7,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
   Object failureFor(int status, [Object? details]) => MapboxFunctions.failureFor(
-        FunctionException(status: status, details: details),
-        notFoundMessage: 'not found message',
-        limitMessage: 'limit message',
-      );
+    FunctionException(status: status, details: details),
+    notFoundMessage: 'not found message',
+    limitMessage: 'limit message',
+  );
 
   group('MapboxFunctions.failureFor', () {
     test("uses the caller's message when the function itself says not found", () {

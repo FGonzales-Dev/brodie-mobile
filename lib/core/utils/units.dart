@@ -19,7 +19,10 @@ Measurement formatShortDistance(double meters, DistanceUnit unit) {
   const metersPerFoot = 0.3048;
   return switch (unit) {
     DistanceUnit.km when meters < 1000 => (value: '${(meters / 10).round() * 10}', unit: 'm'),
-    DistanceUnit.mi when meters < _metersPerMile / 10 => (value: '${(meters / metersPerFoot / 50).round() * 50}', unit: 'ft'),
+    DistanceUnit.mi when meters < _metersPerMile / 10 => (
+      value: '${(meters / metersPerFoot / 50).round() * 50}',
+      unit: 'ft',
+    ),
     _ => formatDistance(meters, unit),
   };
 }

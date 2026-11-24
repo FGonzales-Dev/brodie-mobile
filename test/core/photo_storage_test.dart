@@ -58,16 +58,16 @@ void main() {
   });
 
   test("a file that isn't an image is refused with a clear message", () async {
-    await expectLater(
-      preparePhoto(Uint8List.fromList([1, 2, 3, 4]), maxSide: 512),
-      throwsA(isA<ValidationFailure>()),
-    );
+    await expectLater(preparePhoto(Uint8List.fromList([1, 2, 3, 4]), maxSide: 512), throwsA(isA<ValidationFailure>()));
   });
 
   test('links point at the public bucket, and nothing without a photo', () {
     const urls = PhotoUrls('https://abc.supabase.co');
     expect(urls.avatar('user-1/pic.jpg'), 'https://abc.supabase.co/storage/v1/object/public/avatars/user-1/pic.jpg');
-    expect(urls.vehicle('user-1/bike.jpg'), 'https://abc.supabase.co/storage/v1/object/public/vehicle-photos/user-1/bike.jpg');
+    expect(
+      urls.vehicle('user-1/bike.jpg'),
+      'https://abc.supabase.co/storage/v1/object/public/vehicle-photos/user-1/bike.jpg',
+    );
     expect(urls.avatar(null), isNull);
     expect(urls.avatar(''), isNull);
   });
@@ -81,7 +81,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.dark,
-        home: const Scaffold(body: BrodieAvatar(name: 'lea', imageUrl: 'https://example.invalid/pic.jpg')),
+        home: const Scaffold(
+          body: BrodieAvatar(name: 'lea', imageUrl: 'https://example.invalid/pic.jpg'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -102,7 +104,12 @@ void main() {
     test('if saving fails, the new upload is deleted and the old photo kept', () async {
       final storage = _FakeStorage();
       await expectLater(
-        storage.replace(PhotoBucket.avatars, jpeg, save: (_) => Future.error(Exception('offline')), replaces: 'user-1/old.jpg'),
+        storage.replace(
+          PhotoBucket.avatars,
+          jpeg,
+          save: (_) => Future.error(Exception('offline')),
+          replaces: 'user-1/old.jpg',
+        ),
         throwsException,
       );
       expect(storage.deleted, ['user-1/new-1.jpg']);

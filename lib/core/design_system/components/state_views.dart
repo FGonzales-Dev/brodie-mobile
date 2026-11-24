@@ -46,9 +46,8 @@ class EmptyState extends StatelessWidget {
     // Centered and scrollable when it fills a screen; inline inside lists,
     // where the height is unbounded.
     return LayoutBuilder(
-      builder: (context, constraints) => constraints.hasBoundedHeight
-          ? Center(child: SingleChildScrollView(child: content))
-          : content,
+      builder: (context, constraints) =>
+          constraints.hasBoundedHeight ? Center(child: SingleChildScrollView(child: content)) : content,
     );
   }
 }

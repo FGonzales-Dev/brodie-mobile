@@ -27,11 +27,11 @@ enum RidePeriod {
 
   /// Start (inclusive) and end (exclusive) as of [now]; null for no limit.
   ({DateTime? from, DateTime? to}) rangeAt(DateTime now) => switch (this) {
-        allTime => (from: null, to: null),
-        last30Days => (from: DateTime(now.year, now.month, now.day - 29), to: null),
-        thisMonth => (from: DateTime(now.year, now.month), to: DateTime(now.year, now.month + 1)),
-        thisYear => (from: DateTime(now.year), to: DateTime(now.year + 1)),
-      };
+    allTime => (from: null, to: null),
+    last30Days => (from: DateTime(now.year, now.month, now.day - 29), to: null),
+    thisMonth => (from: DateTime(now.year, now.month), to: DateTime(now.year, now.month + 1)),
+    thisYear => (from: DateTime(now.year), to: DateTime(now.year + 1)),
+  };
 }
 
 enum RideSort {
@@ -65,7 +65,8 @@ abstract class RideFilter with _$RideFilter {
   const RideFilter._();
 
   /// Filters that narrow the list (the sort doesn't count).
-  int get activeCount => [kind != RideKind.all, period != RidePeriod.allTime, vehicleId != null].where((on) => on).length;
+  int get activeCount =>
+      [kind != RideKind.all, period != RidePeriod.allTime, vehicleId != null].where((on) => on).length;
 
   bool get isDefault => activeCount == 0 && sort == RideSort.newest;
 
@@ -82,11 +83,11 @@ abstract class RideFilter with _$RideFilter {
   }
 
   int compare(Ride a, Ride b) => switch (sort) {
-        RideSort.newest => b.startedAt.compareTo(a.startedAt),
-        RideSort.oldest => a.startedAt.compareTo(b.startedAt),
-        RideSort.distance => b.distanceMeters.compareTo(a.distanceMeters),
-        RideSort.movingTime => b.movingTime.compareTo(a.movingTime),
-      };
+    RideSort.newest => b.startedAt.compareTo(a.startedAt),
+    RideSort.oldest => a.startedAt.compareTo(b.startedAt),
+    RideSort.distance => b.distanceMeters.compareTo(a.distanceMeters),
+    RideSort.movingTime => b.movingTime.compareTo(a.movingTime),
+  };
 }
 
 /// What the filtered history adds up to.

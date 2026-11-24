@@ -4,17 +4,17 @@ import 'package:brodie/features/history/domain/ride_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Ride _ride(String id, DateTime startedAt, {double km = 5, int movingMin = 10, String? trip, String? vehicle}) => Ride(
-      id: id,
-      arrived: true,
-      distanceMeters: km * 1000,
-      duration: Duration(minutes: movingMin + 2),
-      movingTime: Duration(minutes: movingMin),
-      maxSpeedMps: 20,
-      startedAt: startedAt,
-      endedAt: startedAt.add(Duration(minutes: movingMin + 2)),
-      groupTripId: trip,
-      vehicleId: vehicle,
-    );
+  id: id,
+  arrived: true,
+  distanceMeters: km * 1000,
+  duration: Duration(minutes: movingMin + 2),
+  movingTime: Duration(minutes: movingMin),
+  maxSpeedMps: 20,
+  startedAt: startedAt,
+  endedAt: startedAt.add(Duration(minutes: movingMin + 2)),
+  groupTripId: trip,
+  vehicleId: vehicle,
+);
 
 void main() {
   final now = DateTime(2026, 11, 26, 15, 30);

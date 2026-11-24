@@ -101,9 +101,8 @@ class HistoryScreen extends ConsumerWidget {
                 child: BrodieButton.secondary(
                   label: 'Show more',
                   isLoading: history.isLoading,
-                  onPressed: () => context.runWithFeedback(
-                    () => ref.read(rideHistoryControllerProvider.notifier).loadMore(),
-                  ),
+                  onPressed: () =>
+                      context.runWithFeedback(() => ref.read(rideHistoryControllerProvider.notifier).loadMore()),
                 ),
               ),
           ],
@@ -121,7 +120,10 @@ class HistoryScreen extends ConsumerWidget {
               trailing: BrodieIconButton(
                 icon: Icons.tune,
                 tooltip: 'Filter and sort',
-                badgeCount: filter.activeCount - (filter.kind == RideKind.all ? 0 : 1) + (filter.sort == RideSort.newest ? 0 : 1),
+                badgeCount:
+                    filter.activeCount -
+                    (filter.kind == RideKind.all ? 0 : 1) +
+                    (filter.sort == RideSort.newest ? 0 : 1),
                 onPressed: () => _showFilters(context, vehicleList),
               ),
             ),
@@ -130,7 +132,8 @@ class HistoryScreen extends ConsumerWidget {
               child: BrodieSegmentedControl<RideKind>(
                 options: [for (final kind in RideKind.values) (kind, kind.label)],
                 selected: filter.kind,
-                onChanged: (kind) => ref.read(rideFilterControllerProvider.notifier).update((f) => f.copyWith(kind: kind)),
+                onChanged: (kind) =>
+                    ref.read(rideFilterControllerProvider.notifier).update((f) => f.copyWith(kind: kind)),
               ),
             ),
             const HistoryTotalsLine(),
@@ -176,8 +179,8 @@ class _RideTile extends ConsumerWidget {
         icon: waiting
             ? Icons.cloud_upload_outlined
             : vehicle != null
-                ? vehicleIcon(vehicle!.type)
-                : (ride.groupTripId != null ? Icons.groups : Icons.route),
+            ? vehicleIcon(vehicle!.type)
+            : (ride.groupTripId != null ? Icons.groups : Icons.route),
       ),
       title: rideTitle(ride),
       subtitle: details.join(' · '),

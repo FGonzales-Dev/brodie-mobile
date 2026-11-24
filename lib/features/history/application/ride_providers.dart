@@ -70,8 +70,8 @@ class RideSync extends _$RideSync {
     } else {
       await ref.read(rideRepositoryProvider).setVehicle(rideId, vehicleId);
       ref
-      ..invalidate(rideHistoryControllerProvider)
-      ..invalidate(rideHistoryTotalsProvider);
+        ..invalidate(rideHistoryControllerProvider)
+        ..invalidate(rideHistoryTotalsProvider);
     }
     ref.invalidate(rideDetailProvider(rideId));
     await ref.read(rideDeviceStoreProvider).saveLastVehicle(userId, vehicleId);
@@ -79,7 +79,10 @@ class RideSync extends _$RideSync {
 
   Future<void> delete(String rideId) async {
     if (_pendingRide(rideId) != null) {
-      await _setPending([for (final ride in state) if (ride.id != rideId) ride]);
+      await _setPending([
+        for (final ride in state)
+          if (ride.id != rideId) ride,
+      ]);
       // It may have reached the server without confirming; if it didn't,
       // there's nothing to delete there.
       try {
@@ -134,7 +137,10 @@ class RideSync extends _$RideSync {
   }
 
   Future<void> _removePending(String rideId) {
-    return _setPending([for (final ride in state) if (ride.id != rideId) ride]);
+    return _setPending([
+      for (final ride in state)
+        if (ride.id != rideId) ride,
+    ]);
   }
 
   Future<void> _setPending(List<Ride> rides) async {

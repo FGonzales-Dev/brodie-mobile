@@ -8,8 +8,7 @@ sealed class AppFailure implements Exception {
   final String message;
 
   /// User-facing text for any error caught in the UI.
-  static String messageFor(Object error) =>
-      error is AppFailure ? error.message : const UnknownFailure().message;
+  static String messageFor(Object error) => error is AppFailure ? error.message : const UnknownFailure().message;
 
   @override
   String toString() => '$runtimeType: $message';

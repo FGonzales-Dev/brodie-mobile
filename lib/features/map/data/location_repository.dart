@@ -64,10 +64,10 @@ class LocationRepository {
 
   /// The plugin's own errors for "no more locations", as [LocationAccessLost].
   static LocationAccessLost? _accessLostFrom(Object error) => switch (error) {
-        LocationServiceDisabledException() => const LocationAccessLost(LocationAccess.serviceDisabled),
-        PermissionDeniedException() => const LocationAccessLost(LocationAccess.denied),
-        _ => null,
-      };
+    LocationServiceDisabledException() => const LocationAccessLost(LocationAccess.serviceDisabled),
+    PermissionDeniedException() => const LocationAccessLost(LocationAccess.denied),
+    _ => null,
+  };
 
   static LocationSettings _settings(int distanceFilterMeters, bool background) {
     if (!background) {
@@ -75,23 +75,23 @@ class LocationRepository {
     }
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => AndroidSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: distanceFilterMeters,
-          foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationTitle: 'Group ride in progress',
-            notificationText: 'Sharing your position with your group',
-            notificationChannelName: 'Group ride',
-            setOngoing: true,
-          ),
+        accuracy: LocationAccuracy.high,
+        distanceFilter: distanceFilterMeters,
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationTitle: 'Group ride in progress',
+          notificationText: 'Sharing your position with your group',
+          notificationChannelName: 'Group ride',
+          setOngoing: true,
         ),
+      ),
       TargetPlatform.iOS => AppleSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: distanceFilterMeters,
-          activityType: ActivityType.automotiveNavigation,
-          pauseLocationUpdatesAutomatically: false,
-          allowBackgroundLocationUpdates: true,
-          showBackgroundLocationIndicator: true,
-        ),
+        accuracy: LocationAccuracy.high,
+        distanceFilter: distanceFilterMeters,
+        activityType: ActivityType.automotiveNavigation,
+        pauseLocationUpdatesAutomatically: false,
+        allowBackgroundLocationUpdates: true,
+        showBackgroundLocationIndicator: true,
+      ),
       _ => LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: distanceFilterMeters),
     };
   }
@@ -101,19 +101,19 @@ class LocationRepository {
   Future<void> openLocationSettings() => Geolocator.openLocationSettings();
 
   static GeoFix _toGeoFix(Position position) => GeoFix(
-        position: GeoPoint(latitude: position.latitude, longitude: position.longitude),
-        accuracyMeters: position.accuracy,
-        speedMps: position.speed,
-        headingDegrees: position.heading,
-        timestamp: position.timestamp,
-      );
+    position: GeoPoint(latitude: position.latitude, longitude: position.longitude),
+    accuracyMeters: position.accuracy,
+    speedMps: position.speed,
+    headingDegrees: position.heading,
+    timestamp: position.timestamp,
+  );
 
   static LocationAccess _toAccess(LocationPermission permission) => switch (permission) {
-        LocationPermission.always => LocationAccess.always,
-        LocationPermission.whileInUse => LocationAccess.whileInUse,
-        LocationPermission.deniedForever => LocationAccess.deniedForever,
-        LocationPermission.denied || LocationPermission.unableToDetermine => LocationAccess.denied,
-      };
+    LocationPermission.always => LocationAccess.always,
+    LocationPermission.whileInUse => LocationAccess.whileInUse,
+    LocationPermission.deniedForever => LocationAccess.deniedForever,
+    LocationPermission.denied || LocationPermission.unableToDetermine => LocationAccess.denied,
+  };
 }
 
 @Riverpod(keepAlive: true)

@@ -164,23 +164,63 @@ abstract final class BrodieFonts {
 /// Type scale. Display styles are meant for uppercase strings; components
 /// that use them uppercase their text (user-entered names excepted).
 abstract final class BrodieType {
-  static const screenTitle =
-      TextStyle(fontFamily: BrodieFonts.display, fontWeight: FontWeight.w800, fontSize: 40, height: 1, letterSpacing: .8);
-  static const headline =
-      TextStyle(fontFamily: BrodieFonts.display, fontWeight: FontWeight.w800, fontSize: 30, height: 1, letterSpacing: .6);
-  static const title =
-      TextStyle(fontFamily: BrodieFonts.display, fontWeight: FontWeight.w800, fontSize: 22, height: 1.1, letterSpacing: .4);
+  static const screenTitle = TextStyle(
+    fontFamily: BrodieFonts.display,
+    fontWeight: FontWeight.w800,
+    fontSize: 40,
+    height: 1,
+    letterSpacing: .8,
+  );
+  static const headline = TextStyle(
+    fontFamily: BrodieFonts.display,
+    fontWeight: FontWeight.w800,
+    fontSize: 30,
+    height: 1,
+    letterSpacing: .6,
+  );
+  static const title = TextStyle(
+    fontFamily: BrodieFonts.display,
+    fontWeight: FontWeight.w800,
+    fontSize: 22,
+    height: 1.1,
+    letterSpacing: .4,
+  );
   static const stat = TextStyle(fontFamily: BrodieFonts.display, fontWeight: FontWeight.w800, fontSize: 32, height: 1);
-  static const button =
-      TextStyle(fontFamily: BrodieFonts.display, fontWeight: FontWeight.w800, fontSize: 20, letterSpacing: 1.2);
-  static const label =
-      TextStyle(fontFamily: BrodieFonts.display, fontWeight: FontWeight.w700, fontSize: 14, letterSpacing: 1.7);
-  static const navLabel =
-      TextStyle(fontFamily: BrodieFonts.display, fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 1);
+  static const button = TextStyle(
+    fontFamily: BrodieFonts.display,
+    fontWeight: FontWeight.w800,
+    fontSize: 20,
+    letterSpacing: 1.2,
+  );
+  static const label = TextStyle(
+    fontFamily: BrodieFonts.display,
+    fontWeight: FontWeight.w700,
+    fontSize: 14,
+    letterSpacing: 1.7,
+  );
+  static const navLabel = TextStyle(
+    fontFamily: BrodieFonts.display,
+    fontWeight: FontWeight.w700,
+    fontSize: 13,
+    letterSpacing: 1,
+  );
   static const body = TextStyle(fontFamily: BrodieFonts.body, fontWeight: FontWeight.w400, fontSize: 14, height: 1.35);
-  static const bodyStrong =
-      TextStyle(fontFamily: BrodieFonts.body, fontWeight: FontWeight.w600, fontSize: 14, height: 1.35);
-  static const caption = TextStyle(fontFamily: BrodieFonts.body, fontWeight: FontWeight.w400, fontSize: 12, height: 1.3);
-  static const overline =
-      TextStyle(fontFamily: BrodieFonts.body, fontWeight: FontWeight.w700, fontSize: 10, letterSpacing: .8);
+  static const bodyStrong = TextStyle(
+    fontFamily: BrodieFonts.body,
+    fontWeight: FontWeight.w600,
+    fontSize: 14,
+    height: 1.35,
+  );
+  static const caption = TextStyle(
+    fontFamily: BrodieFonts.body,
+    fontWeight: FontWeight.w400,
+    fontSize: 12,
+    height: 1.3,
+  );
+  static const overline = TextStyle(
+    fontFamily: BrodieFonts.body,
+    fontWeight: FontWeight.w700,
+    fontSize: 10,
+    letterSpacing: .8,
+  );
 }

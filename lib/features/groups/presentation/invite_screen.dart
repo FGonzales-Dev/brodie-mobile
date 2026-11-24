@@ -148,7 +148,9 @@ class _InviteLinkCardState extends ConsumerState<_InviteLinkCard> {
           const SizedBox(height: BrodieSpace.xs),
           Row(
             children: [
-              Expanded(child: BrodieButton.secondary(label: 'Copy link', icon: Icons.copy, compact: true, onPressed: _copy)),
+              Expanded(
+                child: BrodieButton.secondary(label: 'Copy link', icon: Icons.copy, compact: true, onPressed: _copy),
+              ),
               const SizedBox(width: BrodieSpace.xs),
               Expanded(
                 child: BrodieButton.secondary(
@@ -249,11 +251,11 @@ class _MemberList extends ConsumerWidget {
   final String groupId;
 
   static String _statusLabel(MemberStatus status) => switch (status) {
-        MemberStatus.pending => 'Invited',
-        MemberStatus.joined => 'Joined',
-        MemberStatus.fellBehind => 'Fell behind',
-        MemberStatus.left => 'Left',
-      };
+    MemberStatus.pending => 'Invited',
+    MemberStatus.joined => 'Joined',
+    MemberStatus.fellBehind => 'Fell behind',
+    MemberStatus.left => 'Left',
+  };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

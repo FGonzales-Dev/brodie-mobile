@@ -6,7 +6,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   testWidgets('the privacy policy shows its date, sections and bullet points', (tester) async {
-    await tester.pumpWidget(MaterialApp(theme: AppTheme.dark, home: const LegalScreen(document: privacyPolicy)));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: const LegalScreen(document: privacyPolicy),
+      ),
+    );
 
     expect(find.text('Last updated ${privacyPolicy.updated}'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('YOUR LOCATION'), 300);

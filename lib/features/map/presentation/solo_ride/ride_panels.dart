@@ -25,17 +25,25 @@ class ManeuverBanner extends ConsumerWidget {
 
     final (Widget leading, String title, String? detail) = switch (ride) {
       SoloRideState(rerouting: true) => (
-          SizedBox.square(dimension: 36, child: CircularProgressIndicator(color: colors.onPrimaryAction)),
-          'Rerouting…',
-          'Finding a new route from where you are',
-        ),
-      _ when progress == null => (Icon(Icons.location_searching, size: 40, color: colors.onPrimaryAction), 'Waiting for GPS…', null),
-      _ when maneuver == null => (Icon(Icons.sports_score, size: 40, color: colors.onPrimaryAction), 'Almost there', ride.destination.name),
+        SizedBox.square(dimension: 36, child: CircularProgressIndicator(color: colors.onPrimaryAction)),
+        'Rerouting…',
+        'Finding a new route from where you are',
+      ),
+      _ when progress == null => (
+        Icon(Icons.location_searching, size: 40, color: colors.onPrimaryAction),
+        'Waiting for GPS…',
+        null,
+      ),
+      _ when maneuver == null => (
+        Icon(Icons.sports_score, size: 40, color: colors.onPrimaryAction),
+        'Almost there',
+        ride.destination.name,
+      ),
       _ => (
-          Icon(maneuverIcon(maneuver), size: 44, color: colors.onPrimaryAction),
-          formatShortDistance(progress.distanceToManeuverMeters!, units).text,
-          maneuver.instruction,
-        ),
+        Icon(maneuverIcon(maneuver), size: 44, color: colors.onPrimaryAction),
+        formatShortDistance(progress.distanceToManeuverMeters!, units).text,
+        maneuver.instruction,
+      ),
     };
 
     return Column(
@@ -61,7 +69,8 @@ class ManeuverBanner extends ConsumerWidget {
             ],
           ),
         ),
-        if (ride.notice case final notice?) BrodieAlert(icon: Icons.info_outline, color: colors.warning, message: notice),
+        if (ride.notice case final notice?)
+          BrodieAlert(icon: Icons.info_outline, color: colors.warning, message: notice),
       ],
     );
   }
@@ -91,11 +100,17 @@ class RideHud extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Expanded(child: StatTile(value: speed.value, unit: speed.unit)),
+            Expanded(
+              child: StatTile(value: speed.value, unit: speed.unit),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: remaining.value, unit: '${remaining.unit} left')),
+            Expanded(
+              child: StatTile(value: remaining.value, unit: '${remaining.unit} left'),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: arrival, unit: 'arrive')),
+            Expanded(
+              child: StatTile(value: arrival, unit: 'arrive'),
+            ),
           ],
         ),
         const SizedBox(height: BrodieSpace.sm),
@@ -112,7 +127,9 @@ class RideHud extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: BrodieSpace.sm),
-            Expanded(child: BrodieButton.secondary(label: 'End ride', icon: Icons.stop, onPressed: onEnd)),
+            Expanded(
+              child: BrodieButton.secondary(label: 'End ride', icon: Icons.stop, onPressed: onEnd),
+            ),
           ],
         ),
       ],
@@ -156,11 +173,17 @@ class ArrivalPanel extends ConsumerWidget {
         const SizedBox(height: BrodieSpace.md),
         Row(
           children: [
-            Expanded(child: StatTile(value: ridden.value, unit: '${ridden.unit} ridden')),
+            Expanded(
+              child: StatTile(value: ridden.value, unit: '${ridden.unit} ridden'),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: rideTime.value, unit: rideTime.unit)),
+            Expanded(
+              child: StatTile(value: rideTime.value, unit: rideTime.unit),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: clockLabel(context, arrivedAt), unit: 'arrived')),
+            Expanded(
+              child: StatTile(value: clockLabel(context, arrivedAt), unit: 'arrived'),
+            ),
           ],
         ),
         const SizedBox(height: BrodieSpace.sm),
@@ -177,20 +200,23 @@ IconData maneuverIcon(RouteManeuver maneuver) {
   return switch (maneuver.type) {
     'arrive' => Icons.sports_score,
     'depart' => Icons.navigation,
-    'roundabout' || 'rotary' || 'roundabout turn' || 'exit roundabout' || 'exit rotary' =>
-      towardLeft ? Icons.roundabout_left : Icons.roundabout_right,
+    'roundabout' ||
+    'rotary' ||
+    'roundabout turn' ||
+    'exit roundabout' ||
+    'exit rotary' => towardLeft ? Icons.roundabout_left : Icons.roundabout_right,
     'merge' => Icons.merge,
     'fork' => towardLeft ? Icons.fork_left : Icons.fork_right,
     'on ramp' || 'off ramp' => towardLeft ? Icons.ramp_left : Icons.ramp_right,
     _ => switch (modifier) {
-        'uturn' => Icons.u_turn_left,
-        'sharp left' => Icons.turn_sharp_left,
-        'left' => Icons.turn_left,
-        'slight left' => Icons.turn_slight_left,
-        'sharp right' => Icons.turn_sharp_right,
-        'right' => Icons.turn_right,
-        'slight right' => Icons.turn_slight_right,
-        _ => Icons.straight,
-      },
+      'uturn' => Icons.u_turn_left,
+      'sharp left' => Icons.turn_sharp_left,
+      'left' => Icons.turn_left,
+      'slight left' => Icons.turn_slight_left,
+      'sharp right' => Icons.turn_sharp_right,
+      'right' => Icons.turn_right,
+      'slight right' => Icons.turn_slight_right,
+      _ => Icons.straight,
+    },
   };
 }

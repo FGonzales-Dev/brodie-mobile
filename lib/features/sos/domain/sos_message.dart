@@ -12,8 +12,9 @@ abstract final class SosMessage {
     final who = username == null ? 'a Brodie rider' : '@$username on Brodie';
     final where = switch (fix) {
       null => 'I could not get my location.',
-      final fix => 'My location: ${mapLink(fix.position)} '
-          '(within ${fix.accuracyMeters.isFinite ? fix.accuracyMeters.round() : '?'} m, at $time).',
+      final fix =>
+        'My location: ${mapLink(fix.position)} '
+            '(within ${fix.accuracyMeters.isFinite ? fix.accuracyMeters.round() : '?'} m, at $time).',
     };
     return 'SOS from $who. I may need help. $where This message was sent from the Brodie app.';
   }

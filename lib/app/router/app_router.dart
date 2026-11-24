@@ -101,17 +101,31 @@ GoRouter router(Ref ref) {
       GoRoute(path: Routes.vehicles, builder: (_, _) => const VehiclesScreen()),
       GoRoute(path: Routes.emergencyContacts, builder: (_, _) => const EmergencyContactsScreen()),
       GoRoute(path: Routes.settings, builder: (_, _) => const SettingsScreen()),
-      GoRoute(path: Routes.privacy, builder: (_, _) => const LegalScreen(document: privacyPolicy)),
-      GoRoute(path: Routes.terms, builder: (_, _) => const LegalScreen(document: termsOfUse)),
+      GoRoute(
+        path: Routes.privacy,
+        builder: (_, _) => const LegalScreen(document: privacyPolicy),
+      ),
+      GoRoute(
+        path: Routes.terms,
+        builder: (_, _) => const LegalScreen(document: termsOfUse),
+      ),
       GoRoute(path: Routes.about, builder: (_, _) => const AboutScreen()),
       GoRoute(path: Routes.usage, builder: (_, _) => const UsageScreen()),
       StatefulShellRoute.indexedStack(
         builder: (_, _, navigationShell) => AppShell(navigationShell: navigationShell),
         branches: [
-          StatefulShellBranch(routes: [GoRoute(path: Routes.map, builder: (_, _) => const MapScreen())]),
-          StatefulShellBranch(routes: [GoRoute(path: Routes.groups, builder: (_, _) => const GroupsScreen())]),
-          StatefulShellBranch(routes: [GoRoute(path: Routes.history, builder: (_, _) => const HistoryScreen())]),
-          StatefulShellBranch(routes: [GoRoute(path: Routes.profile, builder: (_, _) => const ProfileScreen())]),
+          StatefulShellBranch(
+            routes: [GoRoute(path: Routes.map, builder: (_, _) => const MapScreen())],
+          ),
+          StatefulShellBranch(
+            routes: [GoRoute(path: Routes.groups, builder: (_, _) => const GroupsScreen())],
+          ),
+          StatefulShellBranch(
+            routes: [GoRoute(path: Routes.history, builder: (_, _) => const HistoryScreen())],
+          ),
+          StatefulShellBranch(
+            routes: [GoRoute(path: Routes.profile, builder: (_, _) => const ProfileScreen())],
+          ),
         ],
       ),
     ],

@@ -21,12 +21,7 @@ class PlaceSearchRepository {
     if (query.trim().isEmpty) return const [];
     final json = await _mapbox.invoke(
       _function,
-      {
-        'action': 'suggest',
-        'q': query,
-        'session_token': sessionToken,
-        if (near != null) 'proximity': lngLat(near),
-      },
+      {'action': 'suggest', 'q': query, 'session_token': sessionToken, if (near != null) 'proximity': lngLat(near)},
       notFoundMessage: 'No places found.',
       limitMessage: _limitMessage,
     );
@@ -47,20 +42,22 @@ class PlaceSearchRepository {
   static List<PlaceSuggestion> suggestionsFromResponse(Map<String, dynamic> json) {
     return (json['suggestions'] as List)
         .cast<Map<String, dynamic>>()
-        .map((item) => PlaceSuggestion(
-              id: item['id'] as String,
-              name: item['name'] as String,
-              address: item['address'] as String?,
-            ))
+        .map(
+          (item) => PlaceSuggestion(
+            id: item['id'] as String,
+            name: item['name'] as String,
+            address: item['address'] as String?,
+          ),
+        )
         .toList();
   }
 
   @visibleForTesting
   static Place placeFromResponse(Map<String, dynamic> json) => Place(
-        name: json['name'] as String,
-        address: json['address'] as String?,
-        location: GeoPoint(latitude: (json['lat'] as num).toDouble(), longitude: (json['lng'] as num).toDouble()),
-      );
+    name: json['name'] as String,
+    address: json['address'] as String?,
+    location: GeoPoint(latitude: (json['lat'] as num).toDouble(), longitude: (json['lng'] as num).toDouble()),
+  );
 }
 
 @Riverpod(keepAlive: true)

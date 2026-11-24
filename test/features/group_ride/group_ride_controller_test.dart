@@ -112,13 +112,13 @@ class _FakeLocation extends LocationRepository {
 }
 
 RiderFix _fixOf(int seat, GeoPoint at, {required int tripSeconds, int speedKmh = 40}) => RiderFix(
-      seat: seat,
-      latitude: at.latitude,
-      longitude: at.longitude,
-      headingDegrees: 0,
-      speedKmh: speedKmh,
-      tripSeconds: tripSeconds,
-    );
+  seat: seat,
+  latitude: at.latitude,
+  longitude: at.longitude,
+  headingDegrees: 0,
+  speedKmh: speedKmh,
+  tripSeconds: tripSeconds,
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -143,14 +143,16 @@ void main() {
       late SharedPreferences prefs;
       SharedPreferences.getInstance().then((value) => prefs = value);
       async.flushMicrotasks();
-      final container = ProviderContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-        currentUserProvider.overrideWithValue(AppUser(id: me)),
-        groupRepositoryProvider.overrideWithValue(server),
-        locationRepositoryProvider.overrideWithValue(location),
-        tripChannelFactoryProvider.overrideWithValue((_) => channel),
-        rideClockProvider.overrideWithValue(() => _t0.add(async.elapsed)),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          currentUserProvider.overrideWithValue(AppUser(id: me)),
+          groupRepositoryProvider.overrideWithValue(server),
+          locationRepositoryProvider.overrideWithValue(location),
+          tripChannelFactoryProvider.overrideWithValue((_) => channel),
+          rideClockProvider.overrideWithValue(() => _t0.add(async.elapsed)),
+        ],
+      );
       container.listen(groupRideControllerProvider('group-1'), (_, _) {});
       async.flushMicrotasks();
       body(async, container);

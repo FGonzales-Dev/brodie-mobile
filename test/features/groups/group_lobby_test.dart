@@ -103,11 +103,13 @@ void main() {
   });
 
   ProviderContainer app() {
-    final container = ProviderContainer(overrides: [
-      groupRepositoryProvider.overrideWithValue(server),
-      locationRepositoryProvider.overrideWithValue(_FixedLocation()),
-      directionsRepositoryProvider.overrideWithValue(directions),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        groupRepositoryProvider.overrideWithValue(server),
+        locationRepositoryProvider.overrideWithValue(_FixedLocation()),
+        directionsRepositoryProvider.overrideWithValue(directions),
+      ],
+    );
     addTearDown(container.dispose);
     container.listen(groupLobbyControllerProvider('group-1'), (_, _) {});
     return container;
@@ -139,7 +141,10 @@ void main() {
 
     server.me = 'sam';
     await lobby.join();
-    expect([for (final r in container.read(groupLobbyControllerProvider('group-1')).value!.riders) r.userId], ['leader', 'sam']);
+    expect(
+      [for (final r in container.read(groupLobbyControllerProvider('group-1')).value!.riders) r.userId],
+      ['leader', 'sam'],
+    );
     await lobby.leave();
     expect(container.read(groupLobbyControllerProvider('group-1')).value!.riders, hasLength(1));
 

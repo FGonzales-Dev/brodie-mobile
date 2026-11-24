@@ -16,10 +16,5 @@ Future<void> bootstrap() async {
   await Supabase.initialize(url: Env.supabaseUrl, publishableKey: Env.supabasePublishableKey);
   final prefs = await SharedPreferences.getInstance();
 
-  runApp(
-    ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-      child: const BrodieApp(),
-    ),
-  );
+  runApp(ProviderScope(overrides: [sharedPreferencesProvider.overrideWithValue(prefs)], child: const BrodieApp()));
 }

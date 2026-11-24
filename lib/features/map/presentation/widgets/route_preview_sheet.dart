@@ -28,13 +28,13 @@ class RoutePreviewSheet extends ConsumerWidget {
       RidePlanIdle() => (null, const SizedBox.shrink()),
       RidePlanLoading(:final destination) => (destination, const _Loading()),
       RidePlanPreview(:final destination, :final route) => (
-          destination,
-          _RouteStats(destination: destination, route: route),
-        ),
+        destination,
+        _RouteStats(destination: destination, route: route),
+      ),
       RidePlanError(:final destination, :final error) => (
-          destination,
-          _RouteError(error: error, onRetry: controller.retry, onDismiss: controller.clear),
-        ),
+        destination,
+        _RouteError(error: error, onRetry: controller.retry, onDismiss: controller.clear),
+      ),
     };
     if (destination == null) return const SizedBox.shrink();
 
@@ -55,7 +55,10 @@ class RoutePreviewSheet extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(destination.name.toUpperCase(), style: BrodieType.headline.copyWith(color: colors.textPrimary)),
+                    Text(
+                      destination.name.toUpperCase(),
+                      style: BrodieType.headline.copyWith(color: colors.textPrimary),
+                    ),
                     if (destination.address != null)
                       Text(destination.address!, style: BrodieType.caption.copyWith(color: colors.textSecondary)),
                   ],
@@ -115,11 +118,17 @@ class _RouteStats extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Expanded(child: StatTile(value: distance.value, unit: distance.unit)),
+            Expanded(
+              child: StatTile(value: distance.value, unit: distance.unit),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: duration.value, unit: duration.unit)),
+            Expanded(
+              child: StatTile(value: duration.value, unit: duration.unit),
+            ),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: arrival, unit: 'arrive')),
+            Expanded(
+              child: StatTile(value: arrival, unit: 'arrive'),
+            ),
           ],
         ),
         const SizedBox(height: BrodieSpace.sm),
@@ -163,9 +172,13 @@ class _RouteError extends StatelessWidget {
         const SizedBox(height: BrodieSpace.sm),
         Row(
           children: [
-            Expanded(child: BrodieButton.secondary(label: 'Dismiss', onPressed: onDismiss)),
+            Expanded(
+              child: BrodieButton.secondary(label: 'Dismiss', onPressed: onDismiss),
+            ),
             const SizedBox(width: BrodieSpace.sm),
-            Expanded(child: BrodieButton(label: 'Try again', onPressed: onRetry)),
+            Expanded(
+              child: BrodieButton(label: 'Try again', onPressed: onRetry),
+            ),
           ],
         ),
       ],

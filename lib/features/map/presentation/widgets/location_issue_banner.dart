@@ -62,35 +62,35 @@ class _LocationIssueBannerState extends ConsumerState<LocationIssueBanner> {
     final (IconData icon, Color color, String title, String message, (String, VoidCallback)? action) = switch (issue) {
       LocationIssue.none => (Icons.check, colors.success, '', '', null),
       LocationIssue.serviceDisabled => (
-          Icons.location_disabled,
-          colors.danger,
-          'Location is turned off',
-          "Your phone's location is off, so Brodie can't follow your ride.$group",
-          ('Turn on location', repository.openLocationSettings),
-        ),
+        Icons.location_disabled,
+        colors.danger,
+        'Location is turned off',
+        "Your phone's location is off, so Brodie can't follow your ride.$group",
+        ('Turn on location', repository.openLocationSettings),
+      ),
       LocationIssue.permissionDenied => (
-          Icons.location_off,
-          colors.danger,
-          'Location access is off',
-          "Brodie isn't allowed to use your location, so it can't follow your ride.$group",
-          ('Open settings', repository.openAppSettings),
-        ),
+        Icons.location_off,
+        colors.danger,
+        'Location access is off',
+        "Brodie isn't allowed to use your location, so it can't follow your ride.$group",
+        ('Open settings', repository.openAppSettings),
+      ),
       LocationIssue.signalLost => (
-          Icons.gps_off,
-          colors.warning,
-          'GPS signal lost',
-          widget.lastFix == null
-              ? 'Still looking for your position. Open sky helps.'
-              : 'Your position is out of date until the signal is back.$group',
-          null,
-        ),
+        Icons.gps_off,
+        colors.warning,
+        'GPS signal lost',
+        widget.lastFix == null
+            ? 'Still looking for your position. Open sky helps.'
+            : 'Your position is out of date until the signal is back.$group',
+        null,
+      ),
       LocationIssue.weakSignal => (
-          Icons.gps_not_fixed,
-          colors.warning,
-          'Weak GPS signal',
-          'Your position may jump around for a while.',
-          null,
-        ),
+        Icons.gps_not_fixed,
+        colors.warning,
+        'Weak GPS signal',
+        'Your position may jump around for a while.',
+        null,
+      ),
     };
     if (issue == LocationIssue.none) return const SizedBox.shrink();
 

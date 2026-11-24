@@ -31,7 +31,10 @@ class AuthScaffold extends StatelessWidget {
                   children: [
                     const Align(alignment: Alignment.centerLeft, child: BrandMark()),
                     const SizedBox(height: BrodieSpace.md),
-                    Text(title.toUpperCase(), style: BrodieType.screenTitle.copyWith(fontSize: 48, color: colors.textPrimary)),
+                    Text(
+                      title.toUpperCase(),
+                      style: BrodieType.screenTitle.copyWith(fontSize: 48, color: colors.textPrimary),
+                    ),
                     const SizedBox(height: BrodieSpace.xs),
                     Text(subtitle, style: BrodieType.body.copyWith(color: colors.textSecondary, fontSize: 15)),
                     const SizedBox(height: BrodieSpace.lg),
