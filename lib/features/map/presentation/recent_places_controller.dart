@@ -21,10 +21,10 @@ class RecentPlacesController extends _$RecentPlacesController {
 
   /// Puts [place] first, dropping an earlier copy and anything past [maxPlaces].
   Future<void> add(Place place) {
-    return _replace([place, ...state.where((recent) => !_isSamePlace(recent, place))].take(maxPlaces).toList());
+    return _replace([place, ...state.where((recent) => !recent.isSameAs(place))].take(maxPlaces).toList());
   }
 
-  Future<void> remove(Place place) => _replace(state.where((recent) => !_isSamePlace(recent, place)).toList());
+  Future<void> remove(Place place) => _replace(state.where((recent) => !recent.isSameAs(place)).toList());
 
   Future<void> clear() => _replace(const []);
 
@@ -33,14 +33,5 @@ class RecentPlacesController extends _$RecentPlacesController {
     if (userId == null) return;
     state = places;
     await ref.read(recentPlacesStoreProvider).save(userId, places);
-  }
-
-  /// Same name within about a meter: the search API can return the same
-  /// place with slightly different coordinates.
-  static bool _isSamePlace(Place a, Place b) {
-    const tolerance = 1e-5;
-    return a.name == b.name &&
-        (a.location.latitude - b.location.latitude).abs() < tolerance &&
-        (a.location.longitude - b.location.longitude).abs() < tolerance;
   }
 }

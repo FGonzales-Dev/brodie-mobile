@@ -28,6 +28,17 @@ abstract class PlaceSuggestion with _$PlaceSuggestion {
 @freezed
 abstract class Place with _$Place {
   const factory Place({required String name, String? address, required GeoPoint location}) = _Place;
+
+  const Place._();
+
+  /// Same name within about a meter: search can return the same place with
+  /// slightly different coordinates.
+  bool isSameAs(Place other) {
+    const tolerance = 1e-5;
+    return name == other.name &&
+        (location.latitude - other.location.latitude).abs() < tolerance &&
+        (location.longitude - other.location.longitude).abs() < tolerance;
+  }
 }
 
 @freezed

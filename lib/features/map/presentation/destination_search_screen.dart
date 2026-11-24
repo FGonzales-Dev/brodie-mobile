@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/design_system/design_system.dart';
 import '../../../core/presentation/feedback.dart';
 import '../data/place_search_repository.dart';
+import '../application/saved_places_providers.dart';
 import '../domain/map_models.dart';
+import '../domain/saved_place.dart';
 import 'destination_search_controller.dart';
 import 'recent_places_controller.dart';
 
@@ -64,7 +66,7 @@ class _DestinationSearchScreenState extends ConsumerState<DestinationSearchScree
         ),
       ),
       body: _query.text.trim().length < DestinationSearchController.minQueryLength
-          ? _RecentPlaces(onSelect: _choose)
+          ? _QuickPicks(onSelect: _choose)
           : AsyncValueView(
               value: results,
               onRetry: () => ref.read(destinationSearchControllerProvider(widget.purpose).notifier).retry(_query.text),
@@ -91,10 +93,10 @@ class _DestinationSearchScreenState extends ConsumerState<DestinationSearchScree
   }
 }
 
-/// Shown until the user has typed enough to search: their recent
-/// destinations, or a hint when there are none.
-class _RecentPlaces extends ConsumerWidget {
-  const _RecentPlaces({required this.onSelect});
+/// Shown until the user has typed enough to search: saved places, then
+/// recent destinations. Both cost no place search to pick.
+class _QuickPicks extends ConsumerWidget {
+  const _QuickPicks({required this.onSelect});
 
   final ValueChanged<Place> onSelect;
 
@@ -102,7 +104,7 @@ class _RecentPlaces extends ConsumerWidget {
     final confirmed = await showBrodieConfirmDialog(
       context,
       title: 'Clear recent searches?',
-      message: 'This removes all recent destinations from this device.',
+      message: 'This removes all recent destinations from this device. Saved places stay.',
       confirmLabel: 'Clear',
     );
     if (confirmed) await ref.read(recentPlacesControllerProvider.notifier).clear();
@@ -111,41 +113,89 @@ class _RecentPlaces extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final recents = ref.watch(recentPlacesControllerProvider);
-    if (recents.isEmpty) {
+    final saved = ref.watch(savedPlacesControllerProvider).value ?? const <SavedPlace>[];
+    if (recents.isEmpty && saved.isEmpty) {
       return const EmptyState(
         icon: Icons.search,
         title: 'Where to?',
-        message: 'Type at least ${DestinationSearchController.minQueryLength} letters of a place, address or landmark.',
+        message:
+            'Type at least ${DestinationSearchController.minQueryLength} letters of a place, address or '
+            'landmark. Star places you go often to find them here without searching.',
       );
     }
 
-    final controller = ref.read(recentPlacesControllerProvider.notifier);
+    final recentController = ref.read(recentPlacesControllerProvider.notifier);
+    final savedController = ref.read(savedPlacesControllerProvider.notifier);
+    SavedPlace? savedMatch(Place place) => saved.where((entry) => entry.place.isSameAs(place)).firstOrNull;
+
+    Future<void> toggleSaved(Place place) async {
+      final match = savedMatch(place);
+      await context.runWithFeedback(
+        () => match == null ? savedController.add(place) : savedController.remove(match.id),
+        successMessage: match == null ? 'Saved ${place.name}' : 'Removed from saved places',
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(BrodieSpace.md, 0, BrodieSpace.md, BrodieSpace.lg),
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            const Expanded(child: SectionLabel('Recent')),
-            TextButton(onPressed: () => _confirmClear(context, ref), child: const Text('Clear all')),
-          ],
-        ),
-        BrodieListGroup(
-          children: [
-            for (final place in recents)
-              BrodieListTile(
-                leading: const IconTile(icon: Icons.history),
-                title: place.name,
-                subtitle: place.address,
-                onTap: () => onSelect(place),
-                trailing: IconButton(
-                  tooltip: 'Remove',
-                  icon: const Icon(Icons.close),
-                  onPressed: () => controller.remove(place),
+        if (saved.isNotEmpty) ...[
+          const SectionLabel('Saved'),
+          BrodieListGroup(
+            children: [
+              for (final entry in saved)
+                BrodieListTile(
+                  leading: const IconTile(icon: Icons.star),
+                  title: entry.place.name,
+                  subtitle: entry.place.address,
+                  onTap: () => onSelect(entry.place),
+                  trailing: IconButton(
+                    tooltip: 'Remove from saved',
+                    icon: const Icon(Icons.close),
+                    onPressed: () => toggleSaved(entry.place),
+                  ),
                 ),
-              ),
-          ],
-        ),
+            ],
+          ),
+        ],
+        if (recents.isNotEmpty) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Expanded(child: SectionLabel('Recent')),
+              TextButton(onPressed: () => _confirmClear(context, ref), child: const Text('Clear all')),
+            ],
+          ),
+          BrodieListGroup(
+            children: [
+              for (final place in recents)
+                BrodieListTile(
+                  leading: const IconTile(icon: Icons.history),
+                  title: place.name,
+                  subtitle: place.address,
+                  onTap: () => onSelect(place),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: savedMatch(place) == null ? 'Save place' : 'Remove from saved',
+                        icon: Icon(
+                          savedMatch(place) == null ? Icons.star_border : Icons.star,
+                          color: savedMatch(place) == null ? null : context.colors.accent,
+                        ),
+                        onPressed: () => toggleSaved(place),
+                      ),
+                      IconButton(
+                        tooltip: 'Remove from recent',
+                        icon: const Icon(Icons.close),
+                        onPressed: () => recentController.remove(place),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
       ],
     );
   }
