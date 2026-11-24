@@ -4,9 +4,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router/routes.dart';
 import '../../../core/design_system/design_system.dart';
+import '../../../core/photos/photo_picker.dart';
+import '../../../core/photos/photo_storage.dart';
+import '../../../core/photos/user_avatar.dart';
 import '../../../core/presentation/feedback.dart';
 import '../../auth/application/session_providers.dart';
 import '../application/my_profile_provider.dart';
+import '../data/profile_repository.dart';
 import 'account_controller.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -25,7 +29,8 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.showErrorsOf(accountControllerProvider, context);
-    final username = ref.watch(myProfileProvider).value?.username;
+    final profile = ref.watch(myProfileProvider).value;
+    final username = profile?.username;
     final email = ref.watch(currentUserProvider)?.email ?? '';
     final isBusy = ref.watch(accountControllerProvider).isLoading;
 
@@ -40,7 +45,7 @@ class ProfileScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _Identity(username: username, email: email),
+                  _Identity(username: username, email: email, avatarPath: profile?.avatarPath),
                   const SectionLabel('Garage & safety'),
                   BrodieListGroup(
                     children: [
@@ -115,19 +120,82 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _Identity extends StatelessWidget {
-  const _Identity({required this.username, required this.email});
+class _Identity extends ConsumerStatefulWidget {
+  const _Identity({required this.username, required this.email, required this.avatarPath});
 
   final String? username;
   final String email;
+  final String? avatarPath;
+
+  @override
+  ConsumerState<_Identity> createState() => _IdentityState();
+}
+
+class _IdentityState extends ConsumerState<_Identity> {
+  var _busy = false;
+
+  Future<void> _changePhoto() async {
+    final current = widget.avatarPath;
+    final choice = await pickPhoto(
+      context,
+      title: 'Profile picture',
+      bucket: PhotoBucket.avatars,
+      canRemove: current != null,
+    );
+    if (choice == null || !mounted) return;
+    setState(() => _busy = true);
+    final profiles = ref.read(profileRepositoryProvider);
+    await context.runWithFeedback(() async {
+      switch (choice) {
+        case PhotoPicked(:final jpeg):
+          await profiles.setAvatar(jpeg, replacing: current);
+        case PhotoRemoved():
+          await profiles.removeAvatar(current!);
+      }
+      ref.invalidate(myProfileProvider);
+      await ref.read(myProfileProvider.future);
+    });
+    if (mounted) setState(() => _busy = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final username = widget.username;
+    final email = widget.email;
     final handle = username == null ? email : '@$username';
     return Row(
       children: [
-        BrodieAvatar(name: username ?? email, size: 64, highlighted: true),
+        Semantics(
+          button: true,
+          label: widget.avatarPath == null ? 'Add a profile picture' : 'Change your profile picture',
+          child: InkWell(
+            onTap: _busy ? null : _changePhoto,
+            borderRadius: BrodieSize.borderRadius,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                UserAvatar(name: username ?? email, avatarPath: widget.avatarPath, size: 64, highlighted: true),
+                Positioned(
+                  right: -4,
+                  bottom: -4,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceRaised,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: colors.background, width: 2),
+                    ),
+                    child: _busy
+                        ? const Padding(padding: EdgeInsets.all(4), child: CircularProgressIndicator(strokeWidth: 2))
+                        : Icon(Icons.photo_camera, size: 13, color: colors.textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
         const SizedBox(width: BrodieSpace.md),
         Expanded(
           child: Column(

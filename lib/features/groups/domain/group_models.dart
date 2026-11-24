@@ -29,7 +29,7 @@ abstract class GroupMember with _$GroupMember {
   const factory GroupMember({
     required String userId,
     String? username,
-    String? avatarUrl,
+    String? avatarPath,
     required GroupRole role,
     required MemberStatus status,
     required DateTime joinedAt,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/router/routes.dart';
 import '../../../core/design_system/design_system.dart';
+import '../../../core/photos/user_avatar.dart';
 import '../../../core/presentation/feedback.dart';
 import '../../../core/utils/units.dart';
 import '../../auth/application/session_providers.dart';
@@ -235,7 +236,7 @@ class _Lobby extends ConsumerWidget {
                 children: [
                   for (final rider in riders)
                     BrodieListTile(
-                      leading: BrodieAvatar(name: rider.username ?? '?', highlighted: rider.userId == me),
+                      leading: UserAvatar(name: rider.username ?? '?', avatarPath: rider.avatarPath, highlighted: rider.userId == me),
                       title: '@${rider.username ?? 'rider'}',
                       subtitle: switch ((rider.isLeader, rider.userId == me)) {
                         (true, true) => 'Leader · You',
@@ -252,7 +253,7 @@ class _Lobby extends ConsumerWidget {
                   children: [
                     for (final member in notJoined)
                       BrodieListTile(
-                        leading: BrodieAvatar(name: member.username ?? '?'),
+                        leading: UserAvatar(name: member.username ?? '?', avatarPath: member.avatarPath),
                         title: '@${member.username ?? 'rider'}',
                         subtitle: member.userId == me ? 'You' : null,
                       ),

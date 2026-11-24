@@ -1,17 +1,20 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/di/core_providers.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/guard_remote.dart';
+import '../../../core/photos/photo_storage.dart';
 import '../domain/profile.dart';
 
 part 'profile_repository.g.dart';
 
 class ProfileRepository {
-  ProfileRepository(this._client);
+  ProfileRepository(this._client, this._photos);
 
   final SupabaseClient _client;
+  final PhotoStorage _photos;
 
   Future<Profile> fetchMine() => guardRemote(() async {
         final userId = _client.auth.currentUser?.id ?? (throw const UnauthenticatedFailure());
@@ -34,8 +37,33 @@ class ProfileRepository {
         return (rows as List).cast<Map<String, dynamic>>().map(profileFromRow).toList();
       });
 
-  /// Deletes the account server-side, then ends the local session.
+  /// Uploads [jpeg] as the profile picture, then removes the old one.
+  Future<void> setAvatar(Uint8List jpeg, {String? replacing}) async {
+    final path = await _photos.upload(PhotoBucket.avatars, jpeg);
+    try {
+      await _setAvatarPath(path);
+    } catch (_) {
+      await _photos.delete(PhotoBucket.avatars, path);
+      rethrow;
+    }
+    if (replacing != null) await _photos.delete(PhotoBucket.avatars, replacing);
+  }
+
+  Future<void> removeAvatar(String path) async {
+    await _setAvatarPath(null);
+    await _photos.delete(PhotoBucket.avatars, path);
+  }
+
+  Future<void> _setAvatarPath(String? path) => guardRemote(() async {
+        final userId = _client.auth.currentUser?.id ?? (throw const UnauthenticatedFailure());
+        await _client.from('profiles').update({'avatar_path': path}).eq('id', userId);
+      });
+
+  /// Deletes the rider's photos and the account server-side, then ends the
+  /// local session.
   Future<void> deleteAccount() => guardRemote(() async {
+        // Files aren't removed with the account's rows, so delete them first.
+        await _photos.deleteAllMine();
         await _client.rpc('delete_own_account');
         await _client.auth.signOut();
       });
@@ -43,9 +71,10 @@ class ProfileRepository {
   static Profile profileFromRow(Map<String, dynamic> row) => Profile(
         id: row['id'] as String,
         username: row['username'] as String?,
-        avatarUrl: row['avatar_url'] as String?,
+        avatarPath: row['avatar_path'] as String?,
       );
 }
 
 @Riverpod(keepAlive: true)
-ProfileRepository profileRepository(Ref ref) => ProfileRepository(ref.watch(supabaseClientProvider));
+ProfileRepository profileRepository(Ref ref) =>
+    ProfileRepository(ref.watch(supabaseClientProvider), ref.watch(photoStorageProvider));

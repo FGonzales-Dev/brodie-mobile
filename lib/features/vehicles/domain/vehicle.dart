@@ -13,7 +13,14 @@ enum VehicleType {
 
 @freezed
 abstract class Vehicle with _$Vehicle {
-  const factory Vehicle({required String id, required VehicleType type, required String name}) = _Vehicle;
+  const factory Vehicle({
+    required String id,
+    required VehicleType type,
+    required String name,
+
+    /// The photo's file in the vehicle-photos bucket; see `PhotoUrls`.
+    String? photoPath,
+  }) = _Vehicle;
 }
 
 /// The fields a user edits; id and owner are assigned by the backend.

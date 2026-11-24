@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/design_system/design_system.dart';
+import '../../../core/photos/user_avatar.dart';
 import '../../../core/presentation/feedback.dart';
 import '../../auth/application/session_providers.dart';
 import '../../profile/domain/profile.dart';
@@ -223,7 +224,7 @@ class _RiderSearchState extends ConsumerState<_RiderSearch> {
                   children: [
                     for (final rider in riders)
                       BrodieListTile(
-                        leading: BrodieAvatar(name: rider.username ?? '?'),
+                        leading: UserAvatar(name: rider.username ?? '?', avatarPath: rider.avatarPath),
                         title: '@${rider.username}',
                         trailing: SizedBox(
                           width: 110,
@@ -264,7 +265,7 @@ class _MemberList extends ConsumerWidget {
         children: [
           for (final member in members)
             BrodieListTile(
-              leading: BrodieAvatar(name: member.username ?? '?'),
+              leading: UserAvatar(name: member.username ?? '?', avatarPath: member.avatarPath),
               title: '@${member.username ?? 'unknown'}',
               subtitle: _statusLabel(member.status),
               trailing: member.role == GroupRole.leader

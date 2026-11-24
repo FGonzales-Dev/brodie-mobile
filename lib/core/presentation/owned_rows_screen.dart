@@ -21,6 +21,7 @@ class OwnedRowsScreen<T, D> extends ConsumerWidget {
     required this.subtitleOf,
     required this.leadingOf,
     required this.formBuilder,
+    this.afterDelete,
   });
 
   final AsyncNotifierProvider<OwnedRowsController<T, D>, List<T>> provider;
@@ -36,6 +37,9 @@ class OwnedRowsScreen<T, D> extends ConsumerWidget {
 
   /// Builds the add (null) or edit form; it pops a draft when saved.
   final Widget Function(T? existing) formBuilder;
+
+  /// Cleanup after a row is deleted, e.g. removing its photo file.
+  final Future<void> Function(WidgetRef ref, T item)? afterDelete;
 
   Future<void> _add(BuildContext context, WidgetRef ref) async {
     final draft = await showBrodieSheet<D>(context, builder: (_) => formBuilder(null));
@@ -57,7 +61,10 @@ class OwnedRowsScreen<T, D> extends ConsumerWidget {
       confirmLabel: 'Delete',
     );
     if (!confirmed || !context.mounted) return;
-    await context.runWithFeedback(() => ref.read(provider.notifier).remove(idOf(item)));
+    await context.runWithFeedback(() async {
+      await ref.read(provider.notifier).remove(idOf(item));
+      await afterDelete?.call(ref, item);
+    });
   }
 
   @override

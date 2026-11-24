@@ -28,6 +28,10 @@
 	<true/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Brodie uses the camera when you take a profile picture or a photo of your bike.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Brodie uses your photos when you pick a profile picture or a photo of your bike.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Brodie uses your location to show where you are on the map, to plan routes from your position, and to share your position with your group during a group ride.</string>
 	<key>UIBackgroundModes</key>

@@ -174,7 +174,7 @@ class GroupRepository {
   static GroupMember _memberFromRow(Map<String, dynamic> row) => GroupMember(
         userId: row['user_id'] as String,
         username: row['username'] as String?,
-        avatarUrl: row['avatar_url'] as String?,
+        avatarPath: row['avatar_path'] as String?,
         role: GroupRole.values.byName(row['role'] as String),
         status: _memberStatusFrom(row['status'] as String),
         joinedAt: DateTime.parse(row['joined_at'] as String),
@@ -211,6 +211,7 @@ class GroupRepository {
   static TripRider _riderFromRow(Map<String, dynamic> row) => TripRider(
         userId: row['user_id'] as String,
         username: row['username'] as String?,
+        avatarPath: row['avatar_path'] as String?,
         seat: (row['seat'] as num).toInt(),
         isLeader: row['is_leader'] as bool,
       );

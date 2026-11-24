@@ -31,6 +31,7 @@ abstract class TripRider with _$TripRider {
   const factory TripRider({
     required String userId,
     String? username,
+    String? avatarPath,
     required int seat,
     required bool isLeader,
   }) = _TripRider;

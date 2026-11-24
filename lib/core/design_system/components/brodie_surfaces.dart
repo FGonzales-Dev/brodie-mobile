@@ -32,7 +32,7 @@ class BrodieCard extends StatelessWidget {
 
 /// Square initial-letter avatar; the color is stable for a given [name].
 class BrodieAvatar extends StatelessWidget {
-  const BrodieAvatar({super.key, required this.name, this.size = 36, this.highlighted = false});
+  const BrodieAvatar({super.key, required this.name, this.size = 36, this.highlighted = false, this.imageUrl});
 
   final String name;
   final double size;
@@ -40,17 +40,41 @@ class BrodieAvatar extends StatelessWidget {
   /// Uses the accent color, for the signed-in user.
   final bool highlighted;
 
+  /// A profile picture. The initial shows while it loads and if it fails.
+  final String? imageUrl;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final trimmed = name.trim();
     final palette = BrodieColors.avatarPalette;
     final background = highlighted ? colors.accent : palette[trimmed.hashCode.abs() % palette.length];
+    final initial = _initial(trimmed, colors);
+    final url = imageUrl;
     return Container(
       width: size,
       height: size,
       alignment: Alignment.center,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(3)),
+      child: url == null
+          ? initial
+          : Image.network(
+              url,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              // Decode at the size shown, not the uploaded size.
+              cacheWidth: (size * MediaQuery.devicePixelRatioOf(context)).round(),
+              frameBuilder: (_, child, frame, wasSynchronouslyLoaded) =>
+                  frame == null && !wasSynchronouslyLoaded ? initial : child,
+              errorBuilder: (_, _, _) => initial,
+            ),
+    );
+  }
+
+  Widget _initial(String trimmed, BrodieColors colors) {
+    return Center(
       child: Text(
         trimmed.isEmpty ? '?' : trimmed.characters.first.toUpperCase(),
         style: BrodieType.bodyStrong.copyWith(
