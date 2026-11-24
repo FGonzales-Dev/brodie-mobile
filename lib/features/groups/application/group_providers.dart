@@ -49,3 +49,21 @@ class PendingInvitesController extends _$PendingInvitesController {
 Future<GroupInvitePreview?> groupInvitePreview(Ref ref, String code) {
   return ref.watch(groupRepositoryProvider).fetchInvitePreview(code);
 }
+
+/// A group's finished rides, for its screen.
+@riverpod
+Future<List<PastGroupRide>> groupRideHistory(Ref ref, String groupId) {
+  return ref.watch(groupRepositoryProvider).fetchRideHistory(groupId);
+}
+
+typedef GroupRideDetail = ({GroupRideSummary ride, List<GroupRideRider> riders});
+
+/// One finished group ride and everyone who rode it.
+@riverpod
+Future<GroupRideDetail> groupRideDetail(Ref ref, String tripId) async {
+  final repository = ref.watch(groupRepositoryProvider);
+  // One after the other, so a failure keeps its own message.
+  final ride = await repository.fetchGroupRide(tripId);
+  final riders = await repository.fetchGroupRideRiders(tripId);
+  return (ride: ride, riders: riders);
+}

@@ -58,6 +58,7 @@ class RideRepository {
         'p_arrived': ride.arrived,
         'p_destination_name': ride.destinationName,
         'p_vehicle_id': ride.vehicleId,
+        'p_group_trip_id': ride.groupTripId,
       };
 
   @visibleForTesting
@@ -79,6 +80,8 @@ class RideRepository {
       startedAt: startedAt,
       endedAt: endedAt == null ? startedAt.add(duration) : DateTime.parse(endedAt).toLocal(),
       path: polyline == null ? const [] : PolylineCodec.decode(polyline),
+      groupTripId: row['group_trip_id'] as String?,
+      groupName: row['group_name'] as String?,
     );
   }
 }

@@ -1,7 +1,9 @@
+import 'package:brodie/features/history/data/ride_device_store.dart';
 import 'package:brodie/features/history/data/ride_repository.dart';
 import 'package:brodie/features/history/domain/ride.dart';
 import 'package:brodie/features/map/domain/map_models.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   final ride = Ride(
@@ -50,6 +52,30 @@ void main() {
     expect(read.path, ride.path);
     expect(read.copyWith(path: ride.path, startedAt: ride.startedAt, endedAt: ride.endedAt), ride);
     expect(read.startedAt.isAtSameMomentAs(ride.startedAt), isTrue);
+  });
+
+  test('a group ride is saved with its trip, and history names the group', () async {
+    final groupRide = ride.copyWith(groupTripId: 'trip-1');
+    expect(RideRepository.saveParams(groupRide)['p_group_trip_id'], 'trip-1');
+    expect(RideRepository.saveParams(ride)['p_group_trip_id'], isNull);
+
+    final read = RideRepository.rideFromRow({
+      'id': 'ride-1',
+      'distance_m': 2150,
+      'duration_s': 600,
+      'started_at': '2026-11-02T00:00:00+00:00',
+      'ended_at': '2026-11-02T00:10:00+00:00',
+      'group_trip_id': 'trip-1',
+      'group_name': 'Sunday crew',
+    });
+    expect(read.groupTripId, 'trip-1');
+    expect(read.groupName, 'Sunday crew');
+
+    // A group ride waiting offline keeps its trip until it uploads.
+    SharedPreferences.setMockInitialValues({});
+    final store = RideDeviceStore(await SharedPreferences.getInstance());
+    await store.savePending('user-1', [groupRide]);
+    expect(store.readPending('user-1').single.groupTripId, 'trip-1');
   });
 
   test('fills gaps in older rows', () {

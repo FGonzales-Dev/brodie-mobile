@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/di/core_providers.dart';
+import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/guard_remote.dart';
 import '../../group_ride/domain/group_ride_models.dart';
 import '../../map/domain/map_models.dart';
@@ -101,6 +102,26 @@ class GroupRepository {
   /// Leader only: ends a started ride for everyone.
   Future<void> completeTrip(String tripId) => _rpc('complete_group_trip', {'target_trip_id': tripId});
 
+  /// The group's finished rides, newest first.
+  Future<List<PastGroupRide>> fetchRideHistory(String groupId, {int limit = 20, int offset = 0}) {
+    return _rpcList('get_group_ride_history', pastRideFromRow, {
+      'target_group_id': groupId,
+      'p_limit': limit,
+      'p_offset': offset,
+    });
+  }
+
+  Future<GroupRideSummary> fetchGroupRide(String tripId) async {
+    final rides = await _rpcList('get_group_ride', groupRideFromRow, {'target_trip_id': tripId});
+    if (rides.isEmpty) throw const NotFoundFailure("This group ride isn't available. You may have left the group.");
+    return rides.first;
+  }
+
+  /// Leader first, then by distance ridden.
+  Future<List<GroupRideRider>> fetchGroupRideRiders(String tripId) {
+    return _rpcList('get_group_ride_riders', rideRiderFromRow, {'target_trip_id': tripId});
+  }
+
   Future<void> _rpc(String function, Map<String, dynamic> params) {
     return guardRemote(() => _client.rpc(function, params: params));
   }
@@ -192,6 +213,48 @@ class GroupRepository {
         username: row['username'] as String?,
         seat: (row['seat'] as num).toInt(),
         isLeader: row['is_leader'] as bool,
+      );
+
+  @visibleForTesting
+  static PastGroupRide pastRideFromRow(Map<String, dynamic> row) => PastGroupRide(
+        tripId: row['trip_id'] as String,
+        name: row['name'] as String?,
+        startedAt: DateTime.parse(row['started_at'] as String).toLocal(),
+        endedAt: _parseOptionalDate(row['ended_at'])?.toLocal(),
+        plannedDistanceMeters: (row['planned_distance_m'] as num?)?.toDouble() ?? 0,
+        riderCount: (row['rider_count'] as num).toInt(),
+        myRideId: row['my_ride_id'] as String?,
+      );
+
+  @visibleForTesting
+  static GroupRideSummary groupRideFromRow(Map<String, dynamic> row) {
+    final polyline = row['route_polyline6'] as String?;
+    return GroupRideSummary(
+      tripId: row['trip_id'] as String,
+      groupId: row['group_id'] as String,
+      groupName: row['group_name'] as String,
+      name: row['name'] as String?,
+      leaderUsername: row['leader_username'] as String?,
+      startedAt: DateTime.parse(row['started_at'] as String).toLocal(),
+      endedAt: _parseOptionalDate(row['ended_at'])?.toLocal(),
+      plannedDistanceMeters: (row['planned_distance_m'] as num?)?.toDouble() ?? 0,
+      route: polyline == null ? const [] : PolylineCodec.decode(polyline),
+    );
+  }
+
+  @visibleForTesting
+  static GroupRideRider rideRiderFromRow(Map<String, dynamic> row) => GroupRideRider(
+        userId: row['user_id'] as String,
+        username: row['username'] as String?,
+        isLeader: row['is_leader'] as bool,
+        leftEarly: row['left_early'] as bool,
+        distanceMeters: (row['distance_m'] as num?)?.toDouble(),
+        movingTime: switch (row['moving_s']) {
+          final num seconds => Duration(seconds: seconds.toInt()),
+          _ => null,
+        },
+        maxSpeedMps: (row['max_speed_mps'] as num?)?.toDouble(),
+        arrived: row['arrived'] as bool?,
       );
 
   static DateTime? _parseOptionalDate(Object? value) => value == null ? null : DateTime.parse(value as String);

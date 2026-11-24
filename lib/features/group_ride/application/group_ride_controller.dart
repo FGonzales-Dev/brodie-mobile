@@ -378,7 +378,9 @@ class GroupRideController extends _$GroupRideController {
     final current = state.value;
     if (current == null || current.ended) return;
     _stop();
-    ref.invalidate(myGroupsProvider);
+    ref
+      ..invalidate(myGroupsProvider)
+      ..invalidate(groupRideHistoryProvider(current.trip.groupId));
     state = AsyncData(current.copyWith(end: end, endedAt: _now()));
   }
 
@@ -407,6 +409,7 @@ class GroupRideController extends _$GroupRideController {
       startedAt: current.startedAt,
       endedAt: endedAt,
       path: path,
+      groupTripId: current.trip.id,
     );
   }
 

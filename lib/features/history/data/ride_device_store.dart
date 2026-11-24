@@ -60,6 +60,7 @@ class RideDeviceStore {
         'started_at': ride.startedAt.toUtc().toIso8601String(),
         'ended_at': ride.endedAt.toUtc().toIso8601String(),
         'polyline6': PolylineCodec.encode(ride.path),
+        'group_trip': ride.groupTripId,
       };
 
   static Ride _fromJson(Map<String, dynamic> json) => Ride(
@@ -74,6 +75,7 @@ class RideDeviceStore {
         startedAt: DateTime.parse(json['started_at'] as String).toLocal(),
         endedAt: DateTime.parse(json['ended_at'] as String).toLocal(),
         path: PolylineCodec.decode(json['polyline6'] as String),
+        groupTripId: json['group_trip'] as String?,
       );
 }
 

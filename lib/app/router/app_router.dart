@@ -9,6 +9,7 @@ import '../../features/auth/presentation/sign_up_screen.dart';
 import '../../features/emergency_contacts/presentation/emergency_contacts_screen.dart';
 import '../../features/group_ride/presentation/group_ride_screen.dart';
 import '../../features/groups/presentation/create_group_screen.dart';
+import '../../features/groups/presentation/group_ride_summary_screen.dart';
 import '../../features/groups/presentation/group_screen.dart';
 import '../../features/groups/presentation/groups_screen.dart';
 import '../../features/groups/presentation/invite_screen.dart';
@@ -78,6 +79,10 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: Routes.groupRidePattern,
         builder: (_, state) => GroupRideScreen(groupId: state.pathParameters['groupId']!),
+      ),
+      GoRoute(
+        path: Routes.groupRideSummaryPattern,
+        builder: (_, state) => GroupRideSummaryScreen(tripId: state.pathParameters['tripId']!),
       ),
       GoRoute(path: Routes.vehicles, builder: (_, _) => const VehiclesScreen()),
       GoRoute(path: Routes.emergencyContacts, builder: (_, _) => const EmergencyContactsScreen()),

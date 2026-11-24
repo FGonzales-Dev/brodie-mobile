@@ -26,6 +26,13 @@ abstract class Ride with _$Ride {
 
     /// The route ridden. Empty in history lists; loaded for the ride detail.
     @Default(<GeoPoint>[]) List<GeoPoint> path,
+
+    /// Set when the ride was part of a group ride.
+    String? groupTripId,
+
+    /// The group's name, as the server reports it; null while the ride is
+    /// still waiting to upload.
+    String? groupName,
   }) = _Ride;
 
   const Ride._();

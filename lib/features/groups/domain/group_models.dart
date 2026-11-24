@@ -80,3 +80,57 @@ abstract class GroupInvitePreview with _$GroupInvitePreview {
     MemberStatus? myStatus,
   }) = _GroupInvitePreview;
 }
+
+/// A finished ride in a group's history.
+@freezed
+abstract class PastGroupRide with _$PastGroupRide {
+  const factory PastGroupRide({
+    required String tripId,
+
+    /// The destination's name.
+    String? name,
+    required DateTime startedAt,
+    DateTime? endedAt,
+    required double plannedDistanceMeters,
+    required int riderCount,
+
+    /// This rider's saved ride on the trip, if they rode it.
+    String? myRideId,
+  }) = _PastGroupRide;
+}
+
+/// One finished group ride: the trip and its planned route.
+@freezed
+abstract class GroupRideSummary with _$GroupRideSummary {
+  const factory GroupRideSummary({
+    required String tripId,
+    required String groupId,
+    required String groupName,
+    String? name,
+    String? leaderUsername,
+    required DateTime startedAt,
+    DateTime? endedAt,
+    required double plannedDistanceMeters,
+    @Default(<GeoPoint>[]) List<GeoPoint> route,
+  }) = _GroupRideSummary;
+}
+
+/// Someone who rode a group ride, with the totals from their saved ride.
+/// The stats are null when their ride wasn't saved.
+@freezed
+abstract class GroupRideRider with _$GroupRideRider {
+  const factory GroupRideRider({
+    required String userId,
+    String? username,
+    required bool isLeader,
+    required bool leftEarly,
+    double? distanceMeters,
+    Duration? movingTime,
+    double? maxSpeedMps,
+    bool? arrived,
+  }) = _GroupRideRider;
+
+  const GroupRideRider._();
+
+  bool get hasStats => distanceMeters != null;
+}

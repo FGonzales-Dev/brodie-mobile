@@ -14,6 +14,7 @@ import '../application/group_lobby_controller.dart';
 import '../application/group_providers.dart';
 import '../domain/group_models.dart';
 import 'group_controllers.dart';
+import 'group_ride_summary_screen.dart';
 
 /// A group and its ride lobby: the trip the leader planned, who has joined,
 /// and the actions for the rider's role (plan, start or cancel for the
@@ -97,6 +98,10 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
       final isLeader = after?.trip.leaderId == me;
       // The leader opens it from _start, after the start succeeds.
       if (wasPlanned && nowActive && joined && !isLeader) _openRide();
+      // A ride that just finished joins the past rides.
+      if (before?.trip.status == TripStatus.active && after == null) {
+        ref.invalidate(groupRideHistoryProvider(widget.groupId));
+      }
     });
 
     final group = ref.watch(groupByIdProvider(widget.groupId)).value;
@@ -118,7 +123,10 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
         value: lobby,
         onRetry: () => ref.invalidate(groupLobbyControllerProvider(widget.groupId)),
         data: (lobby) => RefreshIndicator(
-          onRefresh: () => ref.refresh(groupLobbyControllerProvider(widget.groupId).future),
+          onRefresh: () {
+            ref.invalidate(groupRideHistoryProvider(widget.groupId));
+            return ref.refresh(groupLobbyControllerProvider(widget.groupId).future);
+          },
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
@@ -135,6 +143,11 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
                 )
               else
                 _Lobby(groupId: widget.groupId, lobby: lobby, me: me),
+              PastGroupRides(
+                groupId: widget.groupId,
+                onOpen: (ride) => context.push(Routes.groupRideSummary(ride.tripId)),
+              ),
+              const SizedBox(height: BrodieSpace.md),
             ],
           ),
         ),

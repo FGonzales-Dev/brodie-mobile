@@ -115,6 +115,7 @@ class _RideTile extends ConsumerWidget {
     final distance = formatDistance(ride.distanceMeters, units);
     final moving = formatDuration(ride.movingTime);
     final details = [
+      if (ride.groupName case final group?) 'Group · $group' else if (ride.groupTripId != null) 'Group ride',
       rideStartLabel(context, ride),
       '${distance.value} ${distance.unit}',
       '${moving.value} ${moving.unit}',
@@ -123,7 +124,11 @@ class _RideTile extends ConsumerWidget {
 
     return BrodieListTile(
       leading: IconTile(
-        icon: waiting ? Icons.cloud_upload_outlined : (vehicle == null ? Icons.route : vehicleIcon(vehicle!.type)),
+        icon: waiting
+            ? Icons.cloud_upload_outlined
+            : vehicle != null
+                ? vehicleIcon(vehicle!.type)
+                : (ride.groupTripId != null ? Icons.groups : Icons.route),
       ),
       title: rideTitle(ride),
       subtitle: details.join(' · '),

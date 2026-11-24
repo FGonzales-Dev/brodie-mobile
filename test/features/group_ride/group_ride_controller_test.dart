@@ -335,6 +335,24 @@ void main() {
     });
   });
 
+  test('a ride long enough to count is saved with its group trip', () {
+    ride('sam', (async, container) {
+      // 600 m north over 90 s.
+      for (var step = 0; step <= 9; step++) {
+        location.fixes.add(fixAt(north(_start, step * 66.0), _t0.add(async.elapsed), speedMps: 6.6));
+        async.elapse(const Duration(seconds: 10));
+      }
+      controllerOf(container).leave();
+      async.flushMicrotasks();
+
+      final saved = controllerOf(container).rideToSave();
+      expect(saved, isNotNull);
+      expect(saved!.groupTripId, 'trip-1');
+      expect(saved.destinationName, 'Tagaytay');
+      expect(saved.distanceMeters, closeTo(594, 10));
+    });
+  });
+
   test('a ride too short to count is not saved', () {
     ride('sam', (async, container) {
       location.fixes.add(fixAt(_start, _t0));

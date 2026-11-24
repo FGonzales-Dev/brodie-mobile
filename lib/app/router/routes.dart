@@ -28,6 +28,10 @@ abstract final class Routes {
   static const groupRidePattern = '/groups/:groupId/ride';
   static String groupRide(String groupId) => '/groups/$groupId/ride';
 
+  /// A finished group ride, by trip.
+  static const groupRideSummaryPattern = '/group-rides/:tripId';
+  static String groupRideSummary(String tripId) => '/group-rides/$tripId';
+
   static const history = '/history';
   static const rideDetailPattern = '/history/:rideId';
   static String rideDetail(String rideId) => '/history/$rideId';

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/router/routes.dart';
 import '../../../core/design_system/design_system.dart';
 import '../../../core/presentation/feedback.dart';
 import '../../map/presentation/widgets/route_overview_map.dart';
@@ -71,6 +72,34 @@ class RideDetailScreen extends ConsumerWidget {
                     style: BrodieType.body.copyWith(color: context.colors.textSecondary),
                   ),
                   _UploadStatus(rideId: ride.id, justFinished: justFinished),
+                  if (ride.groupTripId case final tripId?) ...[
+                    const SizedBox(height: BrodieSpace.sm),
+                    BrodieCard(
+                      onTap: () => context.push(Routes.groupRideSummary(tripId)),
+                      child: Row(
+                        children: [
+                          const IconTile(icon: Icons.groups),
+                          const SizedBox(width: BrodieSpace.sm),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  ride.groupName == null ? 'Group ride' : 'Group ride with ${ride.groupName}',
+                                  style: BrodieType.bodyStrong.copyWith(color: context.colors.textPrimary),
+                                ),
+                                Text(
+                                  'See who rode and how far',
+                                  style: BrodieType.caption.copyWith(color: context.colors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.chevron_right, color: context.colors.textSecondary),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: BrodieSpace.md),
                   RideStats(ride: ride),
                   const SectionLabel('Vehicle'),
