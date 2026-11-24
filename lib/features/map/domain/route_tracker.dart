@@ -15,6 +15,9 @@ abstract class RideProgress with _$RideProgress {
     required Duration timeRemaining,
     required double distanceFromRouteMeters,
 
+    /// Compass direction back to the route, in degrees; see [rejoinDirection].
+    @Default(0) double bearingToRouteDegrees,
+
     /// How much of the route lies behind the rider, from 0 to 1.
     required double fractionRidden,
 
@@ -62,6 +65,7 @@ class RouteTracker {
       distanceRemainingMeters: remaining,
       timeRemaining: Duration(seconds: (remaining * secondsPerMeter).round()),
       distanceFromRouteMeters: projection.distanceFromRoute,
+      bearingToRouteDegrees: projection.bearingToRoute,
       fractionRidden: _geometry.lengthMeters == 0 ? 0 : projection.alongRoute / _geometry.lengthMeters,
       nextManeuver: next == -1 ? null : route.maneuvers[next],
       distanceToManeuverMeters: next == -1 ? null : math.max(0.0, _maneuverAlong[next] - projection.alongRoute),

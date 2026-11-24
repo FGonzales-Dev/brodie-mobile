@@ -7,6 +7,7 @@ import 'package:brodie/features/map/data/directions_repository.dart';
 import 'package:brodie/features/map/data/location_repository.dart';
 import 'package:brodie/features/map/domain/location_health.dart';
 import 'package:brodie/features/map/domain/map_models.dart';
+import 'package:brodie/features/map/domain/route_rejoin.dart';
 import 'package:brodie/features/map/presentation/ride_planning_controller.dart';
 import 'package:brodie/features/map/presentation/solo_ride/solo_ride_controller.dart';
 import 'package:fake_async/fake_async.dart';
@@ -245,6 +246,26 @@ void main() {
       async.flushMicrotasks();
       expect(location.watches, 2);
       expect(stateOf(container)!.locationLost, isNull);
+    });
+  });
+
+  test('staying well off the route for a minute suggests a reroute; rerouting clears it', () {
+    ride((async, container) {
+      riderAt(async, 0);
+      location.fixes.add(fixAt(east(north(_start, 500), 200), _t0.add(async.elapsed), speedMps: 8));
+      async.flushMicrotasks();
+      final since = stateOf(container)!.farOffRouteSince;
+      expect(since, _t0);
+
+      async.elapse(const Duration(seconds: 70));
+      location.fixes.add(fixAt(east(north(_start, 600), 220), _t0.add(async.elapsed), speedMps: 8));
+      async.flushMicrotasks();
+      expect(stateOf(container)!.farOffRouteSince, since, reason: 'still off since then');
+      expect(RouteRejoin.suggestReroute(farOffSince: since, now: _t0.add(async.elapsed)), isTrue);
+
+      controllerOf(container).reroute();
+      async.flushMicrotasks();
+      expect(stateOf(container)!.farOffRouteSince, isNull);
     });
   });
 }

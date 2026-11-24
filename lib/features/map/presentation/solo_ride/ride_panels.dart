@@ -6,6 +6,7 @@ import '../../../../core/presentation/time_labels.dart';
 import '../../../../core/utils/units.dart';
 import '../../../settings/application/settings_controller.dart';
 import '../../domain/map_models.dart';
+import '../../domain/route_rejoin.dart';
 import '../widgets/ride_panel.dart';
 import 'solo_ride_controller.dart';
 
@@ -80,9 +81,6 @@ class ManeuverBanner extends ConsumerWidget {
 class RideHud extends ConsumerWidget {
   const RideHud({super.key, required this.ride, required this.onEnd, required this.onReroute});
 
-  /// Farther than this from the route, Reroute is highlighted.
-  static const offRouteMeters = 100.0;
-
   final SoloRideState ride;
   final VoidCallback onEnd;
   final VoidCallback onReroute;
@@ -94,7 +92,9 @@ class RideHud extends ConsumerWidget {
     final speed = formatSpeed(ride.lastFix?.speedMps ?? 0, units);
     final remaining = formatDistance(progress?.distanceRemainingMeters ?? ride.route.distanceMeters, units);
     final arrival = progress == null ? '--' : clockLabel(context, DateTime.now().add(progress.timeRemaining));
-    final offRoute = (progress?.distanceFromRouteMeters ?? 0) > offRouteMeters;
+    // Highlighted only once the rider has stayed well off the route, so a
+    // detour or a wobbly GPS doesn't push them into a billed request.
+    final suggestReroute = RouteRejoin.suggestReroute(farOffSince: ride.farOffRouteSince, now: DateTime.now());
 
     return RidePanel(
       children: [
@@ -120,7 +120,7 @@ class RideHud extends ConsumerWidget {
               child: BrodieButton(
                 label: 'Reroute',
                 icon: Icons.alt_route,
-                variant: offRoute ? BrodieButtonVariant.primary : BrodieButtonVariant.secondary,
+                variant: suggestReroute ? BrodieButtonVariant.primary : BrodieButtonVariant.secondary,
                 isLoading: ride.rerouting,
                 // Needs a position to route from.
                 onPressed: ride.lastFix == null ? null : onReroute,

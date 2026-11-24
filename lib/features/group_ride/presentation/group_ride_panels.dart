@@ -5,6 +5,7 @@ import '../../../core/design_system/design_system.dart';
 import '../../../core/presentation/time_labels.dart';
 import '../../../core/utils/units.dart';
 import '../../map/presentation/widgets/location_issue_banner.dart';
+import '../../map/presentation/widgets/rejoin_route_alert.dart';
 import '../../map/presentation/widgets/ride_panel.dart';
 import '../../settings/application/settings_controller.dart';
 import '../application/group_ride_controller.dart';
@@ -67,6 +68,12 @@ class GroupRideBanner extends StatelessWidget {
           startedAt: ride.startedAt,
           inGroupRide: true,
         ),
+        if (!ride.ended)
+          RejoinRouteAlert(
+            progress: ride.progress,
+            lastFix: ride.lastFix,
+            advice: 'Head back to it to stay with your group.',
+          ),
         if (ride.wasConnected && !ride.connected) const _OfflineNote(),
         if (behind.isNotEmpty) _BehindAlert(riders: behind),
       ],

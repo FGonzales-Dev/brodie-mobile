@@ -17,7 +17,10 @@ double distanceBetween(GeoPoint a, GeoPoint b) {
 }
 
 /// Where a point sits relative to a route.
-typedef RouteProjection = ({double distanceFromRoute, double alongRoute});
+///
+/// [bearingToRoute] is the compass direction from the point to the nearest
+/// point on the route, in degrees (0 = north, 90 = east).
+typedef RouteProjection = ({double distanceFromRoute, double alongRoute, double bearingToRoute});
 
 /// A route polyline with precomputed lengths, answering the two questions a
 /// ride asks on every fix without any API call: how far off the route is
@@ -50,6 +53,7 @@ class RouteGeometry {
 
     var bestDistance = double.infinity;
     var bestAlong = 0.0;
+    var bestBearing = 0.0;
     for (var i = 0; i < path.length - 1; i++) {
       final (ax, ay) = toXY(path[i]);
       final (bx, by) = toXY(path[i + 1]);
@@ -64,9 +68,11 @@ class RouteGeometry {
       if (distance < bestDistance) {
         bestDistance = distance;
         bestAlong = _cumulative[i] + t * (_cumulative[i + 1] - _cumulative[i]);
+        // x is east and y is north, so this is a compass bearing.
+        bestBearing = (math.atan2(cx, cy) * 180 / math.pi + 360) % 360;
       }
     }
-    return (distanceFromRoute: bestDistance, alongRoute: bestAlong);
+    return (distanceFromRoute: bestDistance, alongRoute: bestAlong, bearingToRoute: bestBearing);
   }
 }
 

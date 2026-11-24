@@ -12,6 +12,7 @@ import '../../data/directions_repository.dart';
 import '../../data/location_repository.dart';
 import '../../domain/location_health.dart';
 import '../../domain/map_models.dart';
+import '../../domain/route_rejoin.dart';
 import '../../domain/route_tracker.dart';
 import '../../domain/track_recorder.dart';
 import '../ride_planning_controller.dart';
@@ -39,6 +40,10 @@ abstract class SoloRideState with _$SoloRideState {
     /// Set when the phone stopped giving the app locations mid-ride (access
     /// turned off, or location switched off); cleared once they're back.
     LocationAccess? locationLost,
+
+    /// Since when the rider has been well off the route (see [RouteRejoin]);
+    /// null while on or near it.
+    DateTime? farOffRouteSince,
   }) = _SoloRideState;
 
   const SoloRideState._();
@@ -121,6 +126,7 @@ class SoloRideController extends _$SoloRideController {
       lastFix: fix,
       distanceRiddenMeters: _track.distanceMeters,
       locationLost: null,
+      farOffRouteSince: RouteRejoin.farOffSince(progress, since: current.farOffRouteSince, now: _now()),
     );
     if (progress.arrived) {
       next = next.copyWith(arrivedAt: _now());
@@ -162,7 +168,12 @@ class SoloRideController extends _$SoloRideController {
       _tracker = RouteTracker(route, destination: destination);
       // Progress on the new route straight away, not after the next fix.
       final latest = state?.lastFix ?? from;
-      state = state?.copyWith(route: route, progress: _tracker.progressAt(latest), rerouting: false);
+      state = state?.copyWith(
+        route: route,
+        progress: _tracker.progressAt(latest),
+        rerouting: false,
+        farOffRouteSince: null,
+      );
     } catch (error) {
       if (!ref.mounted) return;
       state = state?.copyWith(rerouting: false, notice: AppFailure.messageFor(error));

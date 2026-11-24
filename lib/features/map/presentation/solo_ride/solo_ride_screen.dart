@@ -16,6 +16,7 @@ import '../../../sos/presentation/widgets/sos_button.dart';
 import '../ride_planning_controller.dart';
 import '../widgets/location_issue_banner.dart';
 import '../widgets/map_ornaments.dart';
+import '../widgets/rejoin_route_alert.dart';
 import '../widgets/ride_map_buttons.dart';
 import '../widgets/ride_route_line.dart';
 import '../widgets/route_layers.dart';
@@ -214,6 +215,12 @@ class _SoloRideScreenState extends ConsumerState<SoloRideScreen> {
                           accessLost: ride.locationLost,
                           startedAt: ride.startedAt,
                         ),
+                        if (!ride.rerouting && !ride.arrived)
+                          RejoinRouteAlert(
+                            progress: ride.progress,
+                            lastFix: ride.lastFix,
+                            advice: 'Head back to it, or tap Reroute for a new one.',
+                          ),
                       ],
                     ),
                   ),
