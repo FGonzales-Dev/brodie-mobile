@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/di/core_providers.dart';
 import '../../auth/application/session_providers.dart';
 import '../../groups/application/group_providers.dart';
 import '../../groups/data/group_repository.dart';
@@ -117,10 +118,6 @@ abstract class GroupRideState with _$GroupRideState {
   ]..sort((a, b) => a.sosAt!.compareTo(b.sosAt!));
 }
 
-/// The clock the ride reads; tests replace it.
-@riverpod
-DateTime Function() rideClock(Ref ref) => DateTime.now;
-
 /// A started group ride on this phone: shares the rider's position on the
 /// trip's live channel, shows everyone else's, and flags riders who fall
 /// behind. Positions only pass through the channel; nothing is written to
@@ -159,7 +156,7 @@ class GroupRideController extends _$GroupRideController {
   var _inBackground = false;
   DateTime? _rosterRefreshedAt;
 
-  DateTime _now() => ref.read(rideClockProvider)();
+  DateTime _now() => ref.read(clockProvider)();
 
   GroupRepository get _repository => ref.read(groupRepositoryProvider);
 

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../../core/di/core_providers.dart';
 import '../../../../core/errors/app_failure.dart';
 import '../../../history/domain/ride.dart';
 import '../../../history/domain/ride_from_track.dart';
@@ -57,6 +58,8 @@ class SoloRideController extends _$SoloRideController {
   final _track = TrackRecorder();
   StreamSubscription<GeoFix>? _fixes;
 
+  DateTime _now() => ref.read(clockProvider)();
+
   /// Null when there's no previewed route to ride (e.g. the app was
   /// restarted on this screen); the screen then offers a way back.
   @override
@@ -73,7 +76,7 @@ class SoloRideController extends _$SoloRideController {
     final lastKnown = ref.read(myLocationControllerProvider).value;
     if (lastKnown != null) Future.microtask(() => _onFix(lastKnown));
 
-    return SoloRideState(destination: plan.destination, route: plan.route, startedAt: DateTime.now());
+    return SoloRideState(destination: plan.destination, route: plan.route, startedAt: _now());
   }
 
   void _listen() {
@@ -120,7 +123,7 @@ class SoloRideController extends _$SoloRideController {
       locationLost: null,
     );
     if (progress.arrived) {
-      next = next.copyWith(arrivedAt: DateTime.now());
+      next = next.copyWith(arrivedAt: _now());
       _fixes?.cancel();
     }
     state = next;
@@ -136,7 +139,7 @@ class SoloRideController extends _$SoloRideController {
     return rideFromTrack(
       _track,
       startedAt: current.startedAt,
-      endedAt: current.arrivedAt ?? DateTime.now(),
+      endedAt: current.arrivedAt ?? _now(),
       arrived: current.arrived,
       destinationName: current.destination.name,
     );

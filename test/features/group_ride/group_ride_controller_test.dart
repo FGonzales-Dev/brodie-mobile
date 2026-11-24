@@ -150,7 +150,7 @@ void main() {
           groupRepositoryProvider.overrideWithValue(server),
           locationRepositoryProvider.overrideWithValue(location),
           tripChannelFactoryProvider.overrideWithValue((_) => channel),
-          rideClockProvider.overrideWithValue(() => _t0.add(async.elapsed)),
+          clockProvider.overrideWithValue(() => _t0.add(async.elapsed)),
         ],
       );
       container.listen(groupRideControllerProvider('group-1'), (_, _) {});

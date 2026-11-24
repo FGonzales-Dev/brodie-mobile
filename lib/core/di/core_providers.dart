@@ -19,3 +19,8 @@ SharedPreferences sharedPreferences(Ref ref) {
 
 @Riverpod(keepAlive: true)
 String mapboxAccessToken(Ref ref) => Env.mapboxAccessToken;
+
+/// The current time, for logic that depends on how much time passed (rides,
+/// heartbeats); tests replace it to control time.
+@Riverpod(keepAlive: true)
+DateTime Function() clock(Ref ref) => DateTime.now;
