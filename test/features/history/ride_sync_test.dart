@@ -5,6 +5,7 @@ import 'package:brodie/features/auth/domain/app_user.dart';
 import 'package:brodie/features/history/application/ride_providers.dart';
 import 'package:brodie/features/history/data/ride_repository.dart';
 import 'package:brodie/features/history/domain/ride.dart';
+import 'package:brodie/features/history/domain/ride_filter.dart';
 import 'package:brodie/features/map/domain/map_models.dart';
 import 'package:brodie/features/vehicles/data/vehicle_repository.dart';
 import 'package:brodie/features/vehicles/domain/vehicle.dart';
@@ -40,9 +41,35 @@ class _FakeRides implements RideRepository {
     if (ride != null) saved[rideId] = ride.copyWith(vehicleId: vehicleId);
   }
 
+  /// Each history request's filter and clock, in order.
+  final historyRequests = <({RideFilter filter, DateTime? now, int offset})>[];
+
+  /// Filters and sorts like `get_ride_history`.
+  List<Ride> _matching(RideFilter filter, DateTime? now) =>
+      saved.values.where((ride) => filter.matches(ride, now ?? DateTime.now())).toList()..sort(filter.compare);
+
   @override
-  Future<List<Ride>> fetchHistory({required int limit, required int offset}) async =>
-      saved.values.skip(offset).take(limit).toList();
+  Future<List<Ride>> fetchHistory({
+    required int limit,
+    required int offset,
+    RideFilter filter = const RideFilter(),
+    DateTime? now,
+  }) async {
+    _maybeFail();
+    historyRequests.add((filter: filter, now: now, offset: offset));
+    return _matching(filter, now).skip(offset).take(limit).toList();
+  }
+
+  @override
+  Future<RideTotals> fetchTotals({RideFilter filter = const RideFilter(), DateTime? now}) async {
+    _maybeFail();
+    final rides = _matching(filter, now);
+    return (
+      count: rides.length,
+      distanceMeters: rides.fold(0.0, (sum, ride) => sum + ride.distanceMeters),
+      movingTime: rides.fold(Duration.zero, (sum, ride) => sum + ride.movingTime),
+    );
+  }
 
   @override
   Future<Ride> fetchRide(String id) async => saved[id] ?? (throw const NotFoundFailure());
@@ -174,5 +201,61 @@ void main() {
     expect(sam.read(rideSyncProvider), isEmpty);
     expect(server.saved, isEmpty);
     expect(session(userId: 'alex').read(rideSyncProvider), hasLength(1));
+  });
+
+  group('history filters', () {
+    Ride at(String id, DateTime startedAt, {double km = 5, String? trip, String? vehicle}) => ride(id).copyWith(
+          startedAt: startedAt,
+          endedAt: startedAt.add(const Duration(minutes: 12)),
+          distanceMeters: km * 1000,
+          groupTripId: trip,
+          vehicleId: vehicle,
+        );
+
+    test('the list reloads with the filter, and every page uses the same one', () async {
+      final now = DateTime.now();
+      for (var i = 0; i < 25; i++) {
+        server.saved['g$i'] = at('g$i', now.subtract(Duration(hours: i)), trip: 'trip-1');
+      }
+      server.saved['solo'] = at('solo', now);
+      final container = session();
+      container.listen(rideHistoryControllerProvider, (_, _) {});
+      await container.read(rideHistoryControllerProvider.future);
+
+      container.read(rideFilterControllerProvider.notifier).update((f) => f.copyWith(kind: RideKind.group));
+      final firstPage = await container.read(rideHistoryControllerProvider.future);
+      expect(firstPage.rides, hasLength(20));
+      expect(firstPage.rides.every((ride) => ride.groupTripId != null), isTrue);
+
+      await container.read(rideHistoryControllerProvider.notifier).loadMore();
+      expect(container.read(rideHistoryControllerProvider).value!.rides, hasLength(25));
+      final requests = server.historyRequests;
+      final (page1, page2) = (requests[requests.length - 2], requests.last);
+      expect(page2.offset, 20);
+      expect(page2.filter, page1.filter);
+      expect(page2.now, page1.now, reason: 'what "this month" means mustn\'t shift between pages');
+    });
+
+    test('totals follow the filter', () async {
+      final now = DateTime.now();
+      server.saved['a'] = at('a', now, km: 10, vehicle: 'adv');
+      server.saved['b'] = at('b', now, km: 30);
+      final container = session();
+
+      expect((await container.read(rideHistoryTotalsProvider.future)).count, 2);
+      container.read(rideFilterControllerProvider.notifier).update((f) => f.copyWith(vehicleId: 'adv'));
+      final totals = await container.read(rideHistoryTotalsProvider.future);
+      expect(totals.count, 1);
+      expect(totals.distanceMeters, 10000);
+    });
+
+    test('clearing goes back to everything, newest first', () {
+      final container = session();
+      final filter = container.read(rideFilterControllerProvider.notifier)
+        ..update((f) => f.copyWith(kind: RideKind.solo, sort: RideSort.distance));
+      expect(container.read(rideFilterControllerProvider).isDefault, isFalse);
+      filter.clear();
+      expect(container.read(rideFilterControllerProvider).isDefault, isTrue);
+    });
   });
 }

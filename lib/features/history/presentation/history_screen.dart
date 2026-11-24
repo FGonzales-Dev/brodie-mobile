@@ -13,17 +13,22 @@ import '../../vehicles/domain/vehicle.dart';
 import '../../vehicles/presentation/vehicles_screen.dart';
 import '../application/ride_providers.dart';
 import '../domain/ride.dart';
+import '../domain/ride_filter.dart';
 import 'ride_widgets.dart';
 
-/// Past rides, newest first. Rides still waiting to upload are listed too,
-/// so a ride finished out of signal shows up straight away.
+/// Past rides, filtered by kind, period and vehicle and sorted as the rider
+/// chooses (newest first by default), with totals for what matches. Rides
+/// still waiting to upload are listed first, so a ride finished out of
+/// signal shows up straight away.
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
 
   Future<void> _refresh(WidgetRef ref) async {
     unawaited(ref.read(rideSyncProvider.notifier).uploadPending());
     try {
-      ref.invalidate(rideHistoryControllerProvider);
+      ref
+        ..invalidate(rideHistoryControllerProvider)
+        ..invalidate(rideHistoryTotalsProvider);
       await ref.read(rideHistoryControllerProvider.future);
     } catch (_) {
       // Shown by the list.
@@ -32,13 +37,18 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pending = ref.watch(rideSyncProvider);
+    final filter = ref.watch(rideFilterControllerProvider);
+    final now = DateTime.now();
+    final allPending = ref.watch(rideSyncProvider);
+    final pending = allPending.where((ride) => filter.matches(ride, now)).toList()..sort(filter.compare);
     final history = ref.watch(rideHistoryControllerProvider);
-    final vehicles = {for (final vehicle in ref.watch(vehiclesControllerProvider).value ?? <Vehicle>[]) vehicle.id: vehicle};
+    final vehicleList = ref.watch(vehiclesControllerProvider).value ?? <Vehicle>[];
+    final vehicles = {for (final vehicle in vehicleList) vehicle.id: vehicle};
 
-    final pendingIds = {for (final ride in pending) ride.id};
+    final pendingIds = {for (final ride in allPending) ride.id};
     final saved = [...?history.value?.rides.where((ride) => !pendingIds.contains(ride.id))];
     final loadFailed = history.hasError && !history.hasValue;
+    final filtered = filter.activeCount > 0;
 
     final Widget body;
     if (pending.isEmpty && loadFailed) {
@@ -46,11 +56,21 @@ class HistoryScreen extends ConsumerWidget {
     } else if (pending.isEmpty && !history.hasValue) {
       body = const LoadingState();
     } else if (pending.isEmpty && saved.isEmpty) {
-      body = const EmptyState(
-        icon: Icons.route_outlined,
-        title: 'No rides yet',
-        message: 'Rides you finish, solo or with a group, show up here.',
-      );
+      body = filtered
+          ? EmptyState(
+              icon: Icons.filter_alt_off_outlined,
+              title: 'No rides match',
+              message: 'Try another period, kind or vehicle.',
+              action: BrodieButton.secondary(
+                label: 'Clear filters',
+                onPressed: ref.read(rideFilterControllerProvider.notifier).clear,
+              ),
+            )
+          : const EmptyState(
+              icon: Icons.route_outlined,
+              title: 'No rides yet',
+              message: 'Rides you finish, solo or with a group, show up here.',
+            );
     } else {
       body = RefreshIndicator(
         onRefresh: () => _refresh(ref),
@@ -93,8 +113,146 @@ class HistoryScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const ScreenHeader(title: 'History'),
+            ScreenHeader(
+              title: 'History',
+              trailing: BrodieIconButton(
+                icon: Icons.tune,
+                tooltip: 'Filter and sort',
+                badgeCount: filter.activeCount - (filter.kind == RideKind.all ? 0 : 1) + (filter.sort == RideSort.newest ? 0 : 1),
+                onPressed: () => _showFilters(context, vehicleList),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(BrodieSpace.md, 0, BrodieSpace.md, BrodieSpace.xs),
+              child: BrodieSegmentedControl<RideKind>(
+                options: [for (final kind in RideKind.values) (kind, kind.label)],
+                selected: filter.kind,
+                onChanged: (kind) => ref.read(rideFilterControllerProvider.notifier).update((f) => f.copyWith(kind: kind)),
+              ),
+            ),
+            const _TotalsLine(),
             Expanded(child: body),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFilters(BuildContext context, List<Vehicle> vehicles) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (_) => _FilterSheet(vehicles: vehicles),
+    );
+  }
+}
+
+/// "12 rides · 340 km · 14 h riding" for what the filters match, plus a way
+/// to clear them.
+class _TotalsLine extends ConsumerWidget {
+  const _TotalsLine();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final units = ref.watch(settingsControllerProvider.select((settings) => settings.units));
+    final filter = ref.watch(rideFilterControllerProvider);
+    final totals = ref.watch(rideHistoryTotalsProvider).value;
+    final text = switch (totals) {
+      null => ' ',
+      (count: 0, distanceMeters: _, movingTime: _) => filter.activeCount > 0 ? 'No matching rides' : ' ',
+      (:final count, :final distanceMeters, :final movingTime) => [
+          '$count ${count == 1 ? 'ride' : 'rides'}',
+          switch (formatDistance(distanceMeters, units)) { final d => '${d.value} ${d.unit}' },
+          switch (formatDuration(movingTime)) { final t => '${t.value} ${t.unit} riding' },
+        ].join(' · '),
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(BrodieSpace.md, 0, BrodieSpace.xs, BrodieSpace.xs),
+      child: Row(
+        children: [
+          Expanded(child: Text(text, style: BrodieType.caption.copyWith(color: colors.textSecondary))),
+          if (!filter.isDefault)
+            TextButton(onPressed: ref.read(rideFilterControllerProvider.notifier).clear, child: const Text('Clear')),
+        ],
+      ),
+    );
+  }
+}
+
+/// Period, vehicle and sort. Changes apply as soon as they're tapped.
+class _FilterSheet extends ConsumerWidget {
+  const _FilterSheet({required this.vehicles});
+
+  final List<Vehicle> vehicles;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final filter = ref.watch(rideFilterControllerProvider);
+    final controller = ref.read(rideFilterControllerProvider.notifier);
+
+    Widget chip(String label, bool selected, VoidCallback onTap) => ChoiceChip(
+          label: Text(label),
+          selected: selected,
+          onSelected: (_) => onTap(),
+          showCheckmark: false,
+          selectedColor: colors.accent,
+          labelStyle: BrodieType.bodyStrong.copyWith(color: selected ? colors.onAccent : colors.textPrimary),
+          side: BorderSide(color: selected ? colors.accent : colors.border),
+          shape: const RoundedRectangleBorder(borderRadius: BrodieSize.borderRadius),
+        );
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(BrodieSpace.md, 0, BrodieSpace.md, BrodieSpace.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('FILTER & SORT', style: BrodieType.headline.copyWith(color: colors.textPrimary)),
+            const SectionLabel('When'),
+            Wrap(
+              spacing: BrodieSpace.xs,
+              runSpacing: BrodieSpace.xs,
+              children: [
+                for (final period in RidePeriod.values)
+                  chip(period.label, filter.period == period, () => controller.update((f) => f.copyWith(period: period))),
+              ],
+            ),
+            if (vehicles.isNotEmpty) ...[
+              const SectionLabel('Vehicle'),
+              Wrap(
+                spacing: BrodieSpace.xs,
+                runSpacing: BrodieSpace.xs,
+                children: [
+                  chip('Any', filter.vehicleId == null, () => controller.update((f) => f.copyWith(vehicleId: null))),
+                  for (final vehicle in vehicles)
+                    chip(
+                      vehicle.name,
+                      filter.vehicleId == vehicle.id,
+                      () => controller.update((f) => f.copyWith(vehicleId: vehicle.id)),
+                    ),
+                ],
+              ),
+            ],
+            const SectionLabel('Sort by'),
+            RadioGroup<RideSort>(
+              groupValue: filter.sort,
+              onChanged: (sort) {
+                if (sort != null) controller.update((f) => f.copyWith(sort: sort));
+              },
+              child: Column(
+                children: [
+                  for (final sort in RideSort.values)
+                    RadioListTile<RideSort>(value: sort, title: Text(sort.label), contentPadding: EdgeInsets.zero),
+                ],
+              ),
+            ),
+            const SizedBox(height: BrodieSpace.sm),
+            BrodieButton(label: 'Done', icon: Icons.check, onPressed: () => Navigator.pop(context)),
+            if (!filter.isDefault)
+              TextButton(onPressed: controller.clear, child: const Text('Clear all')),
           ],
         ),
       ),

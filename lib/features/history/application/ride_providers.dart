@@ -6,6 +6,7 @@ import '../../vehicles/data/vehicle_repository.dart';
 import '../data/ride_device_store.dart';
 import '../data/ride_repository.dart';
 import '../domain/ride.dart';
+import '../domain/ride_filter.dart';
 
 part 'ride_providers.g.dart';
 
@@ -68,7 +69,9 @@ class RideSync extends _$RideSync {
       } catch (_) {}
     } else {
       await ref.read(rideRepositoryProvider).setVehicle(rideId, vehicleId);
-      ref.invalidate(rideHistoryControllerProvider);
+      ref
+      ..invalidate(rideHistoryControllerProvider)
+      ..invalidate(rideHistoryTotalsProvider);
     }
     ref.invalidate(rideDetailProvider(rideId));
     await ref.read(rideDeviceStoreProvider).saveLastVehicle(userId, vehicleId);
@@ -85,7 +88,9 @@ class RideSync extends _$RideSync {
     } else {
       await ref.read(rideRepositoryProvider).delete(rideId);
     }
-    ref.invalidate(rideHistoryControllerProvider);
+    ref
+      ..invalidate(rideHistoryControllerProvider)
+      ..invalidate(rideHistoryTotalsProvider);
   }
 
   /// The vehicle picked last, else the only one in the garage.
@@ -116,7 +121,9 @@ class RideSync extends _$RideSync {
       return false;
     }
     await _removePending(rideId);
-    ref.invalidate(rideHistoryControllerProvider);
+    ref
+      ..invalidate(rideHistoryControllerProvider)
+      ..invalidate(rideHistoryTotalsProvider);
     return true;
   }
 
@@ -140,16 +147,40 @@ class RideSync extends _$RideSync {
 
 typedef RideHistoryPage = ({List<Ride> rides, bool hasMore});
 
-/// The rider's saved rides, newest first, a page at a time. Rides still
-/// waiting to upload come from [rideSyncProvider] instead.
+/// How the History tab is filtered and sorted. Kept while the app runs, so
+/// it survives switching tabs; a fresh launch starts unfiltered.
+@Riverpod(keepAlive: true)
+class RideFilterController extends _$RideFilterController {
+  @override
+  RideFilter build() {
+    ref.watch(currentUserProvider);
+    return const RideFilter();
+  }
+
+  void update(RideFilter Function(RideFilter current) change) => state = change(state);
+
+  void clear() => state = const RideFilter();
+}
+
+/// The rider's saved rides matching the current filter, a page at a time.
+/// Rides still waiting to upload come from [rideSyncProvider] instead.
 @riverpod
 class RideHistoryController extends _$RideHistoryController {
   static const pageSize = 20;
 
+  /// Fixed when the list loads, so every page agrees on what "this month"
+  /// means.
+  late DateTime _now;
+  late RideFilter _filter;
+
   @override
   Future<RideHistoryPage> build() async {
     ref.watch(currentUserProvider);
-    final rides = await ref.watch(rideRepositoryProvider).fetchHistory(limit: pageSize, offset: 0);
+    _filter = ref.watch(rideFilterControllerProvider);
+    _now = DateTime.now();
+    final rides = await ref
+        .watch(rideRepositoryProvider)
+        .fetchHistory(limit: pageSize, offset: 0, filter: _filter, now: _now);
     return (rides: rides, hasMore: rides.length == pageSize);
   }
 
@@ -157,7 +188,9 @@ class RideHistoryController extends _$RideHistoryController {
   Future<void> loadMore() async {
     final current = state.value;
     if (current == null || !current.hasMore || state.isLoading) return;
-    final next = await ref.read(rideRepositoryProvider).fetchHistory(limit: pageSize, offset: current.rides.length);
+    final next = await ref
+        .read(rideRepositoryProvider)
+        .fetchHistory(limit: pageSize, offset: current.rides.length, filter: _filter, now: _now);
     // A ride saved since the first page shifts the offsets by one.
     final known = {for (final ride in current.rides) ride.id};
     state = AsyncData((
@@ -165,6 +198,13 @@ class RideHistoryController extends _$RideHistoryController {
       hasMore: next.length == pageSize,
     ));
   }
+}
+
+/// What the filtered history adds up to, for the line above the list.
+@riverpod
+Future<RideTotals> rideHistoryTotals(Ref ref) {
+  ref.watch(currentUserProvider);
+  return ref.watch(rideRepositoryProvider).fetchTotals(filter: ref.watch(rideFilterControllerProvider));
 }
 
 /// One ride with its route: from the upload queue while it's waiting there,

@@ -7,6 +7,7 @@ import '../../../core/errors/app_failure.dart';
 import '../../../core/errors/guard_remote.dart';
 import '../../map/domain/polyline_codec.dart';
 import '../domain/ride.dart';
+import '../domain/ride_filter.dart';
 
 part 'ride_repository.g.dart';
 
@@ -20,13 +21,47 @@ class RideRepository {
   /// Safe to retry: saving a ride id that is already saved changes nothing.
   Future<void> save(Ride ride) => guardRemote(() => _client.rpc('save_completed_ride', params: saveParams(ride)));
 
-  /// Newest first.
-  Future<List<Ride>> fetchHistory({required int limit, required int offset}) {
+  /// Saved rides matching [filter], in its order. [now] fixes what "this
+  /// month" etc. mean for the whole list.
+  Future<List<Ride>> fetchHistory({
+    required int limit,
+    required int offset,
+    RideFilter filter = const RideFilter(),
+    DateTime? now,
+  }) {
     return guardRemote(() async {
-      final rows = await _client.rpc('get_ride_history', params: {'p_limit': limit, 'p_offset': offset});
+      final rows = await _client.rpc(
+        'get_ride_history',
+        params: {'p_limit': limit, 'p_offset': offset, ...filterParams(filter, now ?? DateTime.now()), 'p_sort': filter.sort.wire},
+      );
       return (rows as List).cast<Map<String, dynamic>>().map(rideFromRow).toList();
     });
   }
+
+  Future<RideTotals> fetchTotals({RideFilter filter = const RideFilter(), DateTime? now}) {
+    return guardRemote(() async {
+      final rows = await _client.rpc('get_ride_history_totals', params: filterParams(filter, now ?? DateTime.now()));
+      return totalsFromRow((rows as List).first as Map<String, dynamic>);
+    });
+  }
+
+  @visibleForTesting
+  static Map<String, Object?> filterParams(RideFilter filter, DateTime now) {
+    final (:from, :to) = filter.period.rangeAt(now);
+    return {
+      'p_kind': filter.kind.name,
+      'p_from': from?.toUtc().toIso8601String(),
+      'p_to': to?.toUtc().toIso8601String(),
+      'p_vehicle_id': filter.vehicleId,
+    };
+  }
+
+  @visibleForTesting
+  static RideTotals totalsFromRow(Map<String, dynamic> row) => (
+        count: (row['ride_count'] as num).toInt(),
+        distanceMeters: (row['distance_m'] as num).toDouble(),
+        movingTime: Duration(seconds: (row['moving_s'] as num).toInt()),
+      );
 
   /// One ride with its route.
   Future<Ride> fetchRide(String id) {
