@@ -74,6 +74,9 @@ class GroupRepository {
   /// Leader only.
   Future<void> cancelTrip(String tripId) => _rpc('cancel_group_trip', {'target_trip_id': tripId});
 
+  /// Leader only: ends a started ride for everyone.
+  Future<void> completeTrip(String tripId) => _rpc('complete_group_trip', {'target_trip_id': tripId});
+
   Future<void> _rpc(String function, Map<String, dynamic> params) {
     return guardRemote(() => _client.rpc(function, params: params));
   }

@@ -18,6 +18,8 @@ abstract final class Routes {
   static String group(String groupId) => '/groups/$groupId';
   static const groupInvitePattern = '/groups/:groupId/invite';
   static String groupInvite(String groupId) => '/groups/$groupId/invite';
+  static const groupRidePattern = '/groups/:groupId/ride';
+  static String groupRide(String groupId) => '/groups/$groupId/ride';
 
   static const history = '/history';
   static const rideDetailPattern = '/history/:rideId';

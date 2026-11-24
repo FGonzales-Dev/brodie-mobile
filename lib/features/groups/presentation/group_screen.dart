@@ -55,6 +55,27 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
     if (confirmed && mounted) await _run(_lobby.cancel, successMessage: 'Ride cancelled');
   }
 
+  void _openRide() => context.push(Routes.groupRide(widget.groupId));
+
+  Future<void> _start() async {
+    setState(() => _busy = true);
+    final started = await context.runWithFeedback(_lobby.start);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (started) _openRide();
+  }
+
+  Future<void> _join() async {
+    setState(() => _busy = true);
+    final joined = await context.runWithFeedback(_lobby.join);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    // Joining a ride already under way goes straight to it.
+    if (joined && ref.read(groupLobbyControllerProvider(widget.groupId)).value?.trip.status == TripStatus.active) {
+      _openRide();
+    }
+  }
+
   Future<void> _leave() async {
     final confirmed = await showBrodieConfirmDialog(
       context,
@@ -67,9 +88,19 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final me = ref.watch(currentUserProvider)?.id;
+    // Riders waiting in the lobby go to the ride when the leader starts it.
+    ref.listen(groupLobbyControllerProvider(widget.groupId).select((lobby) => lobby.value), (before, after) {
+      final wasPlanned = before?.trip.status == TripStatus.planned;
+      final nowActive = after?.trip.status == TripStatus.active;
+      final joined = after?.riders.any((rider) => rider.userId == me) ?? false;
+      final isLeader = after?.trip.leaderId == me;
+      // The leader opens it from _start, after the start succeeds.
+      if (wasPlanned && nowActive && joined && !isLeader) _openRide();
+    });
+
     final group = ref.watch(groupByIdProvider(widget.groupId)).value;
     final lobby = ref.watch(groupLobbyControllerProvider(widget.groupId));
-    final me = ref.watch(currentUserProvider)?.id;
     final isLeader = group != null && group.leaderId == me;
 
     return Scaffold(
@@ -114,10 +145,11 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
             isLeader: isLeader,
             joined: lobby.riders.any((rider) => rider.userId == me),
             busy: _busy,
-            onStart: () => _run(_lobby.start, successMessage: 'Ride started'),
+            onStart: _start,
             onCancel: _cancel,
-            onJoin: () => _run(_lobby.join),
+            onJoin: _join,
             onLeave: _leave,
+            onOpenRide: _openRide,
           ),
         _ => null,
       },
@@ -232,6 +264,7 @@ class _LobbyActions extends StatelessWidget {
     required this.onCancel,
     required this.onJoin,
     required this.onLeave,
+    required this.onOpenRide,
   });
 
   final GroupLobby lobby;
@@ -242,17 +275,20 @@ class _LobbyActions extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onJoin;
   final VoidCallback onLeave;
+  final VoidCallback onOpenRide;
 
   @override
   Widget build(BuildContext context) {
     final planned = lobby.trip.status == TripStatus.planned;
+    final openRide = BrodieButton(label: 'Open ride', icon: Icons.sports_motorsports, onPressed: busy ? null : onOpenRide);
     final buttons = <Widget>[
       if (isLeader) ...[
         BrodieButton.secondary(label: 'Cancel ride', onPressed: busy ? null : onCancel),
-        if (planned) BrodieButton(label: 'Start ride', icon: Icons.flag_outlined, isLoading: busy, onPressed: onStart),
-      ] else if (joined)
-        BrodieButton.secondary(label: 'Leave ride', isLoading: busy, onPressed: onLeave)
-      else
+        planned ? BrodieButton(label: 'Start ride', icon: Icons.flag_outlined, isLoading: busy, onPressed: onStart) : openRide,
+      ] else if (joined) ...[
+        BrodieButton.secondary(label: 'Leave ride', isLoading: busy, onPressed: onLeave),
+        if (!planned) openRide,
+      ] else
         BrodieButton(label: 'Join ride', icon: Icons.group_add_outlined, isLoading: busy, onPressed: onJoin),
     ];
 

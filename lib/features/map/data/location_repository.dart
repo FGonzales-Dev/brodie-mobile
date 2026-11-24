@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -6,8 +7,9 @@ import '../domain/map_models.dart';
 
 part 'location_repository.g.dart';
 
-/// Device location and permissions. Only "while in use" access is requested
-/// here; background access comes later, when a group ride starts.
+/// Device location and permissions. Only "while in use" access is ever
+/// requested; group rides keep tracking in the background without "always"
+/// (see [watchPosition]).
 class LocationRepository {
   static const _fixTimeout = Duration(seconds: 15);
 
@@ -47,10 +49,43 @@ class LocationRepository {
   }
 
   /// Fixes while listened to, one per [distanceFilterMeters] of movement.
-  Stream<GeoFix> watchPosition({int distanceFilterMeters = 10}) {
+  ///
+  /// With [keepRunningInBackground] (group rides), fixes keep coming while the
+  /// phone is locked or another app is open, using only "while in use"
+  /// access: the stream starts on screen, then Android keeps it alive with a
+  /// foreground-service notification and iOS with its background location
+  /// mode (the blue location indicator).
+  Stream<GeoFix> watchPosition({int distanceFilterMeters = 10, bool keepRunningInBackground = false}) {
     return Geolocator.getPositionStream(
-      locationSettings: LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: distanceFilterMeters),
+      locationSettings: _settings(distanceFilterMeters, keepRunningInBackground),
     ).map(_toGeoFix);
+  }
+
+  static LocationSettings _settings(int distanceFilterMeters, bool background) {
+    if (!background) {
+      return LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: distanceFilterMeters);
+    }
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android => AndroidSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: distanceFilterMeters,
+          foregroundNotificationConfig: const ForegroundNotificationConfig(
+            notificationTitle: 'Group ride in progress',
+            notificationText: 'Sharing your position with your group',
+            notificationChannelName: 'Group ride',
+            setOngoing: true,
+          ),
+        ),
+      TargetPlatform.iOS => AppleSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: distanceFilterMeters,
+          activityType: ActivityType.automotiveNavigation,
+          pauseLocationUpdatesAutomatically: false,
+          allowBackgroundLocationUpdates: true,
+          showBackgroundLocationIndicator: true,
+        ),
+      _ => LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: distanceFilterMeters),
+    };
   }
 
   Future<void> openAppSettings() => Geolocator.openAppSettings();

@@ -7,6 +7,7 @@ import '../../features/auth/presentation/choose_username_screen.dart';
 import '../../features/auth/presentation/sign_in_screen.dart';
 import '../../features/auth/presentation/sign_up_screen.dart';
 import '../../features/emergency_contacts/presentation/emergency_contacts_screen.dart';
+import '../../features/group_ride/presentation/group_ride_screen.dart';
 import '../../features/groups/presentation/create_group_screen.dart';
 import '../../features/groups/presentation/group_screen.dart';
 import '../../features/groups/presentation/groups_screen.dart';
@@ -66,6 +67,10 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: Routes.groupInvitePattern,
         builder: (_, state) => InviteScreen(groupId: state.pathParameters['groupId']!),
+      ),
+      GoRoute(
+        path: Routes.groupRidePattern,
+        builder: (_, state) => GroupRideScreen(groupId: state.pathParameters['groupId']!),
       ),
       GoRoute(path: Routes.vehicles, builder: (_, _) => const VehiclesScreen()),
       GoRoute(path: Routes.emergencyContacts, builder: (_, _) => const EmergencyContactsScreen()),

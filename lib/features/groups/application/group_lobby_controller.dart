@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../group_ride/application/group_ride_controller.dart';
 import '../../group_ride/domain/group_ride_models.dart';
 import '../../map/data/directions_repository.dart';
 import '../../map/data/location_repository.dart';
@@ -37,8 +38,10 @@ class GroupLobbyController extends _$GroupLobbyController {
   }
 
   /// Keeps what's on screen when a background refresh fails (e.g. no signal).
+  /// Paused while this group's ride screen is open: the ride keeps itself up
+  /// to date, and the lobby underneath isn't visible.
   Future<void> _refreshQuietly() async {
-    if (state.isLoading) return;
+    if (state.isLoading || ref.exists(groupRideControllerProvider(groupId))) return;
     try {
       final lobby = await _load();
       if (ref.mounted) state = AsyncData(lobby);
