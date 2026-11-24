@@ -8,6 +8,8 @@ import 'package:brodie/features/map/data/saved_place_repository.dart';
 import 'package:brodie/features/map/domain/map_models.dart';
 import 'package:brodie/features/map/domain/saved_place.dart';
 import 'package:brodie/features/map/presentation/destination_search_screen.dart';
+import 'package:brodie/features/map/presentation/pick_on_map_screen.dart';
+import 'package:brodie/features/map/presentation/recent_places_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -67,6 +69,14 @@ void main() {
           ),
         ),
         GoRoute(path: '/search', builder: (_, _) => const DestinationSearchScreen()),
+        // Stands in for the map: "uses" a fixed spot straight away.
+        GoRoute(
+          path: '/map/pick',
+          builder: (context, _) => TextButton(
+            onPressed: () => context.pop(pinnedPlace(const GeoPoint(latitude: 14.123456, longitude: 120.987654))),
+            child: const Text('use spot'),
+          ),
+        ),
       ],
     );
     await tester.pumpWidget(
@@ -108,5 +118,24 @@ void main() {
     await tester.tap(find.byTooltip('Remove from saved'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Star places you go often'), findsOneWidget);
+  });
+
+  test('a pinned spot is named and labelled with its coordinates', () {
+    final place = pinnedPlace(const GeoPoint(latitude: 14.123456, longitude: 120.987654));
+    expect(place.name, 'Pinned spot');
+    expect(place.address, '14.12346, 120.98765');
+    expect(place.location, const GeoPoint(latitude: 14.123456, longitude: 120.987654));
+  });
+
+  testWidgets('a spot chosen on the map is returned without searching, and kept as recent', (tester) async {
+    await openSearch(tester);
+    await tester.tap(find.text('Choose on map'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('use spot'));
+    await tester.pumpAndSettle();
+
+    expect(picked?.name, 'Pinned spot');
+    final container = ProviderScope.containerOf(tester.element(find.text('open')));
+    expect(container.read(recentPlacesControllerProvider).single.name, 'Pinned spot');
   });
 }

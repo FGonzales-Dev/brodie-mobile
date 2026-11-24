@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/router/routes.dart';
 import '../../../core/design_system/design_system.dart';
 import '../../../core/presentation/feedback.dart';
 import '../data/place_search_repository.dart';
@@ -38,6 +39,12 @@ class _DestinationSearchScreenState extends ConsumerState<DestinationSearchScree
     if (resolved && mounted) _choose(place!);
   }
 
+  /// A spot picked on the map instead of searched for.
+  Future<void> _pickOnMap() async {
+    final place = await context.push<Place>(Routes.pickOnMap);
+    if (place != null && mounted) _choose(place);
+  }
+
   /// Records [place] as a recent search and returns it to the map.
   void _choose(Place place) {
     ref.read(recentPlacesControllerProvider.notifier).add(place);
@@ -66,7 +73,7 @@ class _DestinationSearchScreenState extends ConsumerState<DestinationSearchScree
         ),
       ),
       body: _query.text.trim().length < DestinationSearchController.minQueryLength
-          ? _QuickPicks(onSelect: _choose)
+          ? _QuickPicks(onSelect: _choose, onPickOnMap: _pickOnMap)
           : AsyncValueView(
               value: results,
               onRetry: () => ref.read(destinationSearchControllerProvider(widget.purpose).notifier).retry(_query.text),
@@ -96,9 +103,10 @@ class _DestinationSearchScreenState extends ConsumerState<DestinationSearchScree
 /// Shown until the user has typed enough to search: saved places, then
 /// recent destinations. Both cost no place search to pick.
 class _QuickPicks extends ConsumerWidget {
-  const _QuickPicks({required this.onSelect});
+  const _QuickPicks({required this.onSelect, required this.onPickOnMap});
 
   final ValueChanged<Place> onSelect;
+  final VoidCallback onPickOnMap;
 
   Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {
     final confirmed = await showBrodieConfirmDialog(
@@ -115,12 +123,13 @@ class _QuickPicks extends ConsumerWidget {
     final recents = ref.watch(recentPlacesControllerProvider);
     final saved = ref.watch(savedPlacesControllerProvider).value ?? const <SavedPlace>[];
     if (recents.isEmpty && saved.isEmpty) {
-      return const EmptyState(
+      return EmptyState(
         icon: Icons.search,
         title: 'Where to?',
         message:
             'Type at least ${DestinationSearchController.minQueryLength} letters of a place, address or '
             'landmark. Star places you go often to find them here without searching.',
+        action: BrodieButton.secondary(label: 'Choose on map', icon: Icons.pin_drop_outlined, onPressed: onPickOnMap),
       );
     }
 
@@ -137,8 +146,18 @@ class _QuickPicks extends ConsumerWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(BrodieSpace.md, 0, BrodieSpace.md, BrodieSpace.lg),
+      padding: const EdgeInsets.fromLTRB(BrodieSpace.md, BrodieSpace.sm, BrodieSpace.md, BrodieSpace.lg),
       children: [
+        BrodieListGroup(
+          children: [
+            BrodieListTile(
+              leading: const IconTile(icon: Icons.pin_drop_outlined),
+              title: 'Choose on map',
+              subtitle: 'Move the map to the spot',
+              onTap: onPickOnMap,
+            ),
+          ],
+        ),
         if (saved.isNotEmpty) ...[
           const SectionLabel('Saved'),
           BrodieListGroup(

@@ -9,6 +9,9 @@ abstract final class Routes {
   static const map = '/map';
   static const destinationSearch = '/map/search';
 
+  /// Picking a destination by moving the map; no place search needed.
+  static const pickOnMap = '/map/pick';
+
   /// Destination search for a group ride; counts as a group search in usage.
   static const groupDestinationSearch = '/map/search?for=group';
   static const soloRide = '/ride/solo';

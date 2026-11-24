@@ -19,6 +19,7 @@ import '../../features/history/presentation/history_screen.dart';
 import '../../features/history/presentation/ride_detail_screen.dart';
 import '../../features/map/presentation/destination_search_screen.dart';
 import '../../features/map/presentation/map_screen.dart';
+import '../../features/map/presentation/pick_on_map_screen.dart';
 import '../../features/map/presentation/solo_ride/solo_ride_screen.dart';
 import '../../features/onboarding/data/onboarding_store.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
@@ -58,6 +59,7 @@ GoRouter router(Ref ref) {
       GoRoute(path: Routes.signUp, builder: (_, _) => const SignUpScreen()),
       GoRoute(path: Routes.chooseUsername, builder: (_, _) => const ChooseUsernameScreen()),
       GoRoute(path: Routes.welcome, builder: (_, _) => const OnboardingScreen()),
+      GoRoute(path: Routes.pickOnMap, builder: (_, _) => const PickOnMapScreen()),
       GoRoute(
         path: Routes.destinationSearch,
         builder: (_, state) => DestinationSearchScreen(
