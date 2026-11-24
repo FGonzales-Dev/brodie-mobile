@@ -1,13 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
     <!-- Keeps group-ride location running with the screen off (geolocator's
-         foreground service). -->
+         foreground service). It starts while the app is open, so "while in
+         use" access is enough; Brodie never asks for background location. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
     <application
-        android:label="brodie"
+        android:label="Brodie"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

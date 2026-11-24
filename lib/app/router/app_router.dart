@@ -25,6 +25,7 @@ import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/profile/application/my_profile_provider.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/map/domain/map_models.dart';
+import '../../features/settings/domain/legal_documents.dart';
 import '../../features/settings/presentation/info_screens.dart';
 import '../../features/sos/presentation/sos_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -100,11 +101,8 @@ GoRouter router(Ref ref) {
       GoRoute(path: Routes.vehicles, builder: (_, _) => const VehiclesScreen()),
       GoRoute(path: Routes.emergencyContacts, builder: (_, _) => const EmergencyContactsScreen()),
       GoRoute(path: Routes.settings, builder: (_, _) => const SettingsScreen()),
-      GoRoute(
-        path: Routes.privacy,
-        builder: (_, _) => const LegalScreen(title: 'Privacy policy', body: privacyPolicyPlaceholder),
-      ),
-      GoRoute(path: Routes.terms, builder: (_, _) => const LegalScreen(title: 'Terms', body: termsPlaceholder)),
+      GoRoute(path: Routes.privacy, builder: (_, _) => const LegalScreen(document: privacyPolicy)),
+      GoRoute(path: Routes.terms, builder: (_, _) => const LegalScreen(document: termsOfUse)),
       GoRoute(path: Routes.about, builder: (_, _) => const AboutScreen()),
       GoRoute(path: Routes.usage, builder: (_, _) => const UsageScreen()),
       StatefulShellRoute.indexedStack(

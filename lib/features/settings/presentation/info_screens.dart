@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design_system/design_system.dart';
 import '../data/settings_repository.dart';
+import '../domain/legal_documents.dart';
 
 class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
@@ -32,34 +33,43 @@ class AboutScreen extends ConsumerWidget {
   }
 }
 
-/// Shared layout for Privacy Policy and Terms. The copy is placeholder until
-/// reviewed legal text exists.
+/// The privacy policy or the terms: a date, an intro, then headed sections.
 class LegalScreen extends StatelessWidget {
-  const LegalScreen({super.key, required this.title, required this.body});
+  const LegalScreen({super.key, required this.document});
 
-  final String title;
-  final String body;
+  final LegalDocument document;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final body = BrodieType.body.copyWith(color: colors.textPrimary, fontSize: 15);
     return Scaffold(
-      appBar: BrodieAppBar(title: title),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(BrodieSpace.lg),
-        child: Text(body, style: BrodieType.body.copyWith(color: context.colors.textPrimary, fontSize: 15)),
+      appBar: BrodieAppBar(title: document.title),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(BrodieSpace.lg, BrodieSpace.md, BrodieSpace.lg, BrodieSpace.xl),
+        children: [
+          Text('Last updated ${document.updated}', style: BrodieType.caption.copyWith(color: colors.textSecondary)),
+          const SizedBox(height: BrodieSpace.sm),
+          Text(document.intro, style: body),
+          for (final section in document.sections) ...[
+            const SizedBox(height: BrodieSpace.lg),
+            Text(section.heading.toUpperCase(), style: BrodieType.title.copyWith(color: colors.textPrimary)),
+            for (final paragraph in section.paragraphs)
+              Padding(
+                padding: const EdgeInsets.only(top: BrodieSpace.xs),
+                child: paragraph.startsWith('• ')
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('•  ', style: body),
+                          Expanded(child: Text(paragraph.substring(2), style: body)),
+                        ],
+                      )
+                    : Text(paragraph, style: body),
+              ),
+          ],
+        ],
       ),
     );
   }
 }
-
-const privacyPolicyPlaceholder = '''
-Placeholder Privacy Policy.
-
-Brodie collects location data to provide navigation and group ride features, account information for authentication, and vehicle/emergency contact details you choose to add. This text is a placeholder and must be replaced with reviewed legal copy before release.
-''';
-
-const termsPlaceholder = '''
-Placeholder Terms of Service.
-
-By using Brodie you agree to ride safely and use group ride and SOS features responsibly. This text is a placeholder and must be replaced with reviewed legal copy before release.
-''';

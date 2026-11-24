@@ -73,6 +73,7 @@ dev_dependencies:
   fake_async: ^1.3.3
   url_launcher_platform_interface: ^2.3.2
   plugin_platform_interface: ^2.1.8
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -135,3 +136,13 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# App icon: regenerate with `dart run tool/generate_app_icon.dart` then
+# `dart run flutter_launcher_icons`.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#FFC400"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
