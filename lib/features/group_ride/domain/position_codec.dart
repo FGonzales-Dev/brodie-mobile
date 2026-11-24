@@ -52,5 +52,22 @@ abstract final class PositionCodec {
     );
   }
 
+  /// SOS on or off: `{"s": seat, "on": true, "a": [...]}`, where `a` is the
+  /// same position array as a fix and is left out without a position.
+  static Map<String, Object> encodeSos(SosSignal signal) => {
+        's': signal.seat,
+        'on': signal.active,
+        if (signal.fix case final fix?) 'a': encode(fix)['a']!,
+      };
+
+  static SosSignal? decodeSos(Map<String, dynamic> payload) {
+    final seat = payload['s'];
+    final active = payload['on'];
+    if (seat is! int || seat < 0 || active is! bool) return null;
+    final fix = payload.containsKey('a') ? decode({'s': seat, 'a': payload['a']}) : null;
+    // A malformed position spoils the position, not the alert.
+    return (seat: seat, active: active, fix: fix);
+  }
+
   static double _round5(double value) => (value * 1e5).roundToDouble() / 1e5;
 }

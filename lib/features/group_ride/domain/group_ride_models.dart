@@ -20,6 +20,10 @@ abstract class RiderFix with _$RiderFix {
   }) = _RiderFix;
 }
 
+/// A rider turning their SOS on or off. [fix] is where they were, when
+/// their phone had a position.
+typedef SosSignal = ({int seat, bool active, RiderFix? fix});
+
 /// A participant in a trip. The seat is a small per-trip number used on
 /// the wire instead of the user id.
 @freezed

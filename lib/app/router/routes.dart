@@ -32,6 +32,10 @@ abstract final class Routes {
   static const groupRideSummaryPattern = '/group-rides/:tripId';
   static String groupRideSummary(String tripId) => '/group-rides/$tripId';
 
+  /// The SOS countdown; [sosFor] during a group ride.
+  static const sos = '/sos';
+  static String sosFor(String groupId) => '/sos?group=$groupId';
+
   static const history = '/history';
   static const rideDetailPattern = '/history/:rideId';
   static String rideDetail(String rideId) => '/history/$rideId';

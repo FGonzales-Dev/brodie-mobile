@@ -11,11 +11,14 @@ import 'rider_markers.dart';
 String _clockAt(BuildContext context, DateTime time) =>
     MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(time));
 
-/// Top of the ride screen: the ride, who's online, and anyone who fell behind.
+/// Top of the ride screen: the ride and who's online, then alerts: riders
+/// who sent an SOS (first), this rider's own SOS, and anyone who fell behind.
 class GroupRideBanner extends StatelessWidget {
-  const GroupRideBanner({super.key, required this.ride});
+  const GroupRideBanner({super.key, required this.ride, required this.onShowRider, required this.onImSafe});
 
   final GroupRideState ride;
+  final ValueChanged<LiveRider> onShowRider;
+  final VoidCallback onImSafe;
 
   @override
   Widget build(BuildContext context) {
@@ -52,8 +55,93 @@ class GroupRideBanner extends StatelessWidget {
             ],
           ),
         ),
+        for (final rider in ride.sos) _SosAlert(rider: rider, onShow: () => onShowRider(rider)),
+        if (ride.mySosAt != null) _MySosAlert(onImSafe: onImSafe),
         if (behind.isNotEmpty) _BehindAlert(riders: behind),
       ],
+    );
+  }
+}
+
+class _SosAlert extends ConsumerWidget {
+  const _SosAlert({required this.rider, required this.onShow});
+
+  final LiveRider rider;
+  final VoidCallback onShow;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    const onDanger = Color(0xFFFFFFFF);
+    final units = ref.watch(settingsControllerProvider.select((settings) => settings.units));
+    final name = '@${rider.rider.username ?? 'rider'}';
+    final where = switch (rider.metersBehindMe) {
+      null => rider.fix == null ? 'No position yet' : 'On the map',
+      final double gap when gap.abs() < 100 => 'Right by you',
+      final double gap when gap > 0 => '${_distance(gap, units)} behind you',
+      final double gap => '${_distance(-gap, units)} ahead of you',
+    };
+    return Container(
+      margin: const EdgeInsets.only(top: BrodieSpace.xs),
+      padding: const EdgeInsets.all(BrodieSpace.sm),
+      decoration: BoxDecoration(color: colors.danger, borderRadius: BrodieSize.borderRadius),
+      child: Row(
+        children: [
+          const Icon(Icons.sos, color: onDanger, size: 32),
+          const SizedBox(width: BrodieSpace.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$name SENT AN SOS', style: BrodieType.headline.copyWith(color: onDanger, fontSize: 20)),
+                Text(
+                  '$where · since ${_clockAt(context, rider.sosAt!)}',
+                  style: BrodieType.bodyStrong.copyWith(color: onDanger),
+                ),
+              ],
+            ),
+          ),
+          if (rider.fix != null)
+            TextButton(
+              onPressed: onShow,
+              style: TextButton.styleFrom(foregroundColor: onDanger),
+              child: const Text('Show'),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MySosAlert extends StatelessWidget {
+  const _MySosAlert({required this.onImSafe});
+
+  final VoidCallback onImSafe;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      margin: const EdgeInsets.only(top: BrodieSpace.xs),
+      padding: const EdgeInsets.all(BrodieSpace.sm),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BrodieSize.borderRadius,
+        border: Border.all(color: colors.danger, width: BrodieSize.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.sos, color: colors.danger),
+          const SizedBox(width: BrodieSpace.sm),
+          Expanded(
+            child: Text(
+              'Your SOS is on. Your group sees where you are.',
+              style: BrodieType.bodyStrong.copyWith(color: colors.textPrimary),
+            ),
+          ),
+          TextButton(onPressed: onImSafe, child: const Text("I'm safe")),
+        ],
+      ),
     );
   }
 }

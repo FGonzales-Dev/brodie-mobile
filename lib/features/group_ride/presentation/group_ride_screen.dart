@@ -16,6 +16,7 @@ import '../../map/domain/map_models.dart';
 import '../../map/presentation/widgets/map_ornaments.dart';
 import '../../map/presentation/widgets/ride_route_line.dart';
 import '../../map/presentation/widgets/route_layers.dart';
+import '../../sos/presentation/sos_screen.dart';
 import '../application/group_ride_controller.dart';
 import 'group_ride_panels.dart';
 import 'rider_markers.dart';
@@ -164,9 +165,12 @@ class _GroupRideScreenState extends ConsumerState<GroupRideScreen> {
     ref.listen(_provider.select((ride) => ride.value?.others), (_, others) {
       if (others != null) _riders.show(others, colors: context.colors);
     });
-    // A buzz when someone newly falls behind, or the ride ends.
+    // A buzz when someone newly falls behind or sends an SOS, or the ride ends.
     ref.listen(_provider.select((ride) => ride.value?.behind.length ?? 0), (before, after) {
       if (after > (before ?? 0)) HapticFeedback.heavyImpact();
+    });
+    ref.listen(_provider.select((ride) => ride.value?.sos.length ?? 0), (before, after) {
+      if (after > (before ?? 0)) HapticFeedback.vibrate();
     });
     ref.listen(_provider.select((ride) => ride.value?.ended ?? false), (wasEnded, ended) {
       if (ended && wasEnded == false) HapticFeedback.heavyImpact();
@@ -226,7 +230,14 @@ class _GroupRideScreenState extends ConsumerState<GroupRideScreen> {
                   key: _topPanel,
                   child: Padding(
                     padding: const EdgeInsets.all(BrodieSpace.md),
-                    child: GroupRideBanner(ride: ride),
+                    child: GroupRideBanner(
+                      ride: ride,
+                      onShowRider: _showRider,
+                      onImSafe: () => context.runWithFeedback(
+                        ref.read(_provider.notifier).cancelSos,
+                        successMessage: 'Your group knows you are safe',
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -238,18 +249,24 @@ class _GroupRideScreenState extends ConsumerState<GroupRideScreen> {
                   key: _bottomPanel,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (!_following)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(BrodieSpace.md),
-                          child: BrodieIconButton(
-                            icon: Icons.navigation,
-                            tooltip: 'Follow me',
-                            onPressed: () => setState(() => _following = true),
-                          ),
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.all(BrodieSpace.md),
+                      child: Row(
+                        children: [
+                          if (!ride.ended)
+                            SosButton(
+                              onPressed: () => context.push(Routes.sosFor(widget.groupId), extra: ride.lastFix),
+                            ),
+                          const Spacer(),
+                          if (!_following)
+                            BrodieIconButton(
+                              icon: Icons.navigation,
+                              tooltip: 'Follow me',
+                              onPressed: () => setState(() => _following = true),
+                            ),
+                        ],
                       ),
+                    ),
                     if (ride.ended)
                       GroupRideEndedPanel(ride: ride, onDone: _done)
                     else

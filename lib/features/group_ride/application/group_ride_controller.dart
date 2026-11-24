@@ -51,6 +51,9 @@ abstract class LiveRider with _$LiveRider {
     /// How far behind this rider they are along the route, in meters;
     /// negative when they're ahead. Null without a position on both sides.
     double? metersBehindMe,
+
+    /// When they sent an SOS that's still on; null otherwise.
+    DateTime? sosAt,
   }) = _LiveRider;
 }
 
@@ -83,6 +86,9 @@ abstract class GroupRideState with _$GroupRideState {
     @Default(false) bool connected,
     GroupRideEnd? end,
     DateTime? endedAt,
+
+    /// When this rider sent an SOS that's still on; null otherwise.
+    DateTime? mySosAt,
   }) = _GroupRideState;
 
   const GroupRideState._();
@@ -92,6 +98,10 @@ abstract class GroupRideState with _$GroupRideState {
   bool get ended => end != null;
 
   List<LiveRider> get behind => [for (final rider in others) if (rider.behind) rider];
+
+  /// Riders whose SOS is on, earliest first.
+  List<LiveRider> get sos => [for (final rider in others) if (rider.sosAt != null) rider]
+    ..sort((a, b) => a.sosAt!.compareTo(b.sosAt!));
 }
 
 /// The clock the ride reads; tests replace it.
@@ -250,6 +260,8 @@ class GroupRideController extends _$GroupRideController {
           unawaited(_refreshRoster());
         }
         _emit(current);
+      case RiderSosChanged(:final signal):
+        _onRiderSos(signal, current);
       case TripEndedByLeader():
         _finishRiding(GroupRideEnd.endedByLeader);
       case ChannelConnectionChanged(:final connected):
@@ -274,6 +286,45 @@ class GroupRideController extends _$GroupRideController {
     _others[fix.seat] = rider.copyWith(fix: fix, heardAt: _now());
     _alongBySeat[fix.seat] = _geometry.project(GeoPoint(latitude: fix.latitude, longitude: fix.longitude)).alongRoute;
     _emit(current);
+  }
+
+  void _onRiderSos(SosSignal signal, GroupRideState current) {
+    if (signal.seat == current.me.seat) return;
+    if (!_others.containsKey(signal.seat)) {
+      _others[signal.seat] = LiveRider(rider: TripRider(userId: '', seat: signal.seat, isLeader: false));
+      unawaited(_refreshRoster());
+    }
+    final rider = _others[signal.seat]!;
+    _others[signal.seat] = rider.copyWith(sosAt: signal.active ? (rider.sosAt ?? _now()) : null);
+    // The alert's position counts as a fix, so the map shows where they are
+    // (unless a newer fix already arrived).
+    if (signal.fix case final fix?) _onRiderFix(fix, current);
+    // Published even when the fix was dropped as out of date.
+    _emit(state.value ?? current);
+  }
+
+  /// Tells the group this rider needs help, with their latest position.
+  /// Stays on until [cancelSos]. Throws when it couldn't be sent.
+  Future<void> sendSos() async {
+    final current = state.value;
+    if (current == null || current.ended) return;
+    final fix = current.lastFix;
+    await _channel.sendSos((
+      seat: current.me.seat,
+      active: true,
+      fix: fix == null ? null : PositionCodec.fromDeviceFix(fix, seat: current.me.seat, tripStartedAt: _tripStartedAt),
+    ));
+    final latest = state.value;
+    if (latest != null && ref.mounted) state = AsyncData(latest.copyWith(mySosAt: latest.mySosAt ?? _now()));
+  }
+
+  /// Tells the group this rider is safe again.
+  Future<void> cancelSos() async {
+    final current = state.value;
+    if (current == null || current.mySosAt == null) return;
+    await _channel.sendSos((seat: current.me.seat, active: false, fix: null));
+    final latest = state.value;
+    if (latest != null && ref.mounted) state = AsyncData(latest.copyWith(mySosAt: null));
   }
 
   /// Recomputes every rider's status and gap, then publishes [next].

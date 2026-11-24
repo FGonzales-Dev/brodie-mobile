@@ -58,17 +58,17 @@ class RiderMarkers {
       for (final (:rider, :at) in placed)
         CircleAnnotationOptions(
           geometry: Point(coordinates: positionOf(at)),
-          circleRadius: 9,
+          circleRadius: rider.sosAt != null ? 13 : 9,
           circleColor: colorFor(rider, colors).toARGB32(),
           circleStrokeColor: (rider.behind ? colors.danger : const Color(0xFFFFFFFF)).toARGB32(),
-          circleStrokeWidth: rider.behind ? 4 : 3,
+          circleStrokeWidth: rider.behind || rider.sosAt != null ? 4 : 3,
         ),
     ]);
     await labels.createMulti([
       for (final (:rider, :at) in placed)
         PointAnnotationOptions(
           geometry: Point(coordinates: positionOf(at)),
-          textField: '@${rider.rider.username ?? 'rider'}',
+          textField: rider.sosAt != null ? 'SOS @${rider.rider.username ?? 'rider'}' : '@${rider.rider.username ?? 'rider'}',
           textSize: 12,
           textOffset: [0, 1.4],
           textAnchor: TextAnchor.TOP,
@@ -81,6 +81,7 @@ class RiderMarkers {
 
   /// Also used by the rider list, so a rider looks the same in both.
   static Color colorFor(LiveRider rider, BrodieColors colors) => switch (rider.status) {
+        _ when rider.sosAt != null => colors.danger,
         RiderStatus.live => colors.success,
         RiderStatus.stale => colors.warning,
         RiderStatus.lost || null => colors.textSecondary,

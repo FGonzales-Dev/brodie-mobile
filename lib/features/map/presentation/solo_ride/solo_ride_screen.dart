@@ -12,6 +12,7 @@ import '../../../../core/errors/app_failure.dart';
 import '../../../../core/presentation/feedback.dart';
 import '../../../../core/presentation/keep_screen_on.dart';
 import '../../../history/application/ride_providers.dart';
+import '../../../sos/presentation/sos_screen.dart';
 import '../ride_planning_controller.dart';
 import '../widgets/map_ornaments.dart';
 import '../widgets/ride_route_line.dart';
@@ -199,18 +200,21 @@ class _SoloRideScreenState extends ConsumerState<SoloRideScreen> {
                   key: _bottomPanel,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (!_following)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Padding(
-                          padding: const EdgeInsets.all(BrodieSpace.md),
-                          child: BrodieIconButton(
-                            icon: Icons.navigation,
-                            tooltip: 'Follow me',
-                            onPressed: () => setState(() => _following = true),
-                          ),
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.all(BrodieSpace.md),
+                      child: Row(
+                        children: [
+                          SosButton(onPressed: () => context.push(Routes.sos, extra: ride.lastFix)),
+                          const Spacer(),
+                          if (!_following)
+                            BrodieIconButton(
+                              icon: Icons.navigation,
+                              tooltip: 'Follow me',
+                              onPressed: () => setState(() => _following = true),
+                            ),
+                        ],
                       ),
+                    ),
                     if (ride.arrived)
                       ArrivalPanel(ride: ride, onDone: _endRide)
                     else

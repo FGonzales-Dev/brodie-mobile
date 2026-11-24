@@ -70,6 +70,7 @@ class _FakeChannel implements TripChannel {
   final sent = <({RiderFix fix, bool viaRest})>[];
   var announcedEnd = false;
   var closed = false;
+  final sos = <SosSignal>[];
 
   void receive(TripChannelEvent event) => _events.add(event);
 
@@ -84,6 +85,9 @@ class _FakeChannel implements TripChannel {
 
   @override
   Future<void> announceEnd() async => announcedEnd = true;
+
+  @override
+  Future<void> sendSos(SosSignal signal) async => sos.add(signal);
 
   @override
   Future<void> close() async => closed = true;
@@ -285,6 +289,60 @@ void main() {
       expect(sam.behind, isTrue);
       expect(sam.metersBehindMe, closeTo(4000, 5));
       expect(stateOf(container)!.behind, [sam]);
+    });
+  });
+
+  test("another rider's SOS shows them, where they are, until they're safe", () {
+    ride('sam', (async, container) {
+      final at = north(_start, 400);
+      channel.receive(RiderSosChanged((seat: 0, active: true, fix: _fixOf(0, at, tripSeconds: 90))));
+      async.flushMicrotasks();
+
+      final lea = stateOf(container)!.sos.single;
+      expect(lea.rider.userId, 'lea');
+      expect(lea.sosAt, _t0);
+      expect(lea.fix?.latitude, closeTo(at.latitude, 1e-5));
+
+      // Repeats don't move the time it started.
+      async.elapse(const Duration(seconds: 30));
+      channel.receive(RiderSosChanged((seat: 0, active: true, fix: null)));
+      async.flushMicrotasks();
+      expect(stateOf(container)!.sos.single.sosAt, _t0);
+
+      channel.receive(RiderSosChanged((seat: 0, active: false, fix: null)));
+      async.flushMicrotasks();
+      expect(stateOf(container)!.sos, isEmpty);
+    });
+  });
+
+  test('an SOS with an older position still raises the alert', () {
+    ride('sam', (async, container) {
+      channel.receive(RiderFixReceived(_fixOf(0, north(_start, 500), tripSeconds: 100)));
+      async.flushMicrotasks();
+      channel.receive(RiderSosChanged((seat: 0, active: true, fix: _fixOf(0, _start, tripSeconds: 50))));
+      async.flushMicrotasks();
+
+      final lea = stateOf(container)!.sos.single;
+      expect(lea.fix?.tripSeconds, 100, reason: 'the newer position is kept');
+    });
+  });
+
+  test('sending an SOS tells the group where this rider is; "safe" turns it off', () {
+    ride('sam', (async, container) {
+      location.fixes.add(fixAt(north(_start, 250), _t0));
+      async.flushMicrotasks();
+
+      controllerOf(container).sendSos();
+      async.flushMicrotasks();
+      expect(channel.sos.single.seat, 1);
+      expect(channel.sos.single.active, isTrue);
+      expect(channel.sos.single.fix?.latitude, closeTo(north(_start, 250).latitude, 1e-5));
+      expect(stateOf(container)!.mySosAt, _t0);
+
+      controllerOf(container).cancelSos();
+      async.flushMicrotasks();
+      expect(channel.sos.last.active, isFalse);
+      expect(stateOf(container)!.mySosAt, isNull);
     });
   });
 

@@ -22,7 +22,9 @@ import '../../features/map/presentation/map_screen.dart';
 import '../../features/map/presentation/solo_ride/solo_ride_screen.dart';
 import '../../features/profile/application/my_profile_provider.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/map/domain/map_models.dart';
 import '../../features/settings/presentation/info_screens.dart';
+import '../../features/sos/presentation/sos_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/usage/presentation/usage_screen.dart';
 import '../../features/vehicles/presentation/vehicles_screen.dart';
@@ -83,6 +85,13 @@ GoRouter router(Ref ref) {
       GoRoute(
         path: Routes.groupRideSummaryPattern,
         builder: (_, state) => GroupRideSummaryScreen(tripId: state.pathParameters['tripId']!),
+      ),
+      GoRoute(
+        path: Routes.sos,
+        builder: (_, state) => SosScreen(
+          groupId: state.uri.queryParameters['group'],
+          lastFix: state.extra is GeoFix ? state.extra! as GeoFix : null,
+        ),
       ),
       GoRoute(path: Routes.vehicles, builder: (_, _) => const VehiclesScreen()),
       GoRoute(path: Routes.emergencyContacts, builder: (_, _) => const EmergencyContactsScreen()),

@@ -27,6 +27,13 @@ class OnlineSeatsChanged extends TripChannelEvent {
   final Set<int> seats;
 }
 
+/// A rider turned their SOS on or off.
+class RiderSosChanged extends TripChannelEvent {
+  const RiderSosChanged(this.signal);
+
+  final SosSignal signal;
+}
+
 /// The leader ended the ride.
 class TripEndedByLeader extends TripChannelEvent {
   const TripEndedByLeader();
@@ -55,6 +62,10 @@ abstract interface class TripChannel {
   /// Tells everyone the leader ended the ride.
   Future<void> announceEnd();
 
+  /// Tells everyone this rider needs help, or is safe again. Always over
+  /// REST too, so it goes out even when the connection is down.
+  Future<void> sendSos(SosSignal signal);
+
   Future<void> close();
 }
 
@@ -63,6 +74,7 @@ class SupabaseTripChannel implements TripChannel {
 
   static const _fixEvent = 'pos';
   static const _endEvent = 'end';
+  static const _sosEvent = 'sos';
 
   final SupabaseClient _client;
   final String tripId;
@@ -85,6 +97,7 @@ class SupabaseTripChannel implements TripChannel {
     channel
         .onBroadcast(event: _fixEvent, callback: _onFix)
         .onBroadcast(event: _endEvent, callback: (_) => _emit(const TripEndedByLeader()))
+        .onBroadcast(event: _sosEvent, callback: _onSos)
         .onPresenceSync((_) => _emit(OnlineSeatsChanged(_onlineSeats(channel))))
         .subscribe((status, error) async {
           switch (status) {
@@ -110,6 +123,13 @@ class SupabaseTripChannel implements TripChannel {
     if (fix != null) _emit(RiderFixReceived(fix));
   }
 
+  void _onSos(Map<String, dynamic> message) {
+    final payload = message['payload'];
+    if (payload is! Map) return;
+    final signal = PositionCodec.decodeSos(Map<String, dynamic>.from(payload));
+    if (signal != null) _emit(RiderSosChanged(signal));
+  }
+
   static Set<int> _onlineSeats(RealtimeChannel channel) => {
         for (final state in channel.presenceState())
           if (int.tryParse(state.key) case final int seat) seat,
@@ -133,6 +153,13 @@ class SupabaseTripChannel implements TripChannel {
     if (channel == null) return;
     // REST, so it goes out even if the connection just dropped.
     await channel.httpSend(event: _endEvent, payload: const <String, dynamic>{});
+  }
+
+  @override
+  Future<void> sendSos(SosSignal signal) async {
+    final channel = _channel;
+    if (channel == null) return;
+    await channel.httpSend(event: _sosEvent, payload: PositionCodec.encodeSos(signal));
   }
 
   @override
