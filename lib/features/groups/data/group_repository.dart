@@ -39,6 +39,30 @@ class GroupRepository {
 
   Future<void> declineInvite(String groupId) => _rpc('decline_group_invite', {'target_group_id': groupId});
 
+  /// The group behind an invite code, or null when it matches none. Wrong
+  /// codes count toward a daily limit on the server.
+  Future<GroupInvitePreview?> fetchInvitePreview(String code) async {
+    final previews = await _rpcList('get_group_invite_preview', _previewFromRow, {'invite_code': code});
+    return previews.firstOrNull;
+  }
+
+  /// Joins the group behind [code] and returns its id, or null when the code
+  /// matches no group (e.g. the leader reset it).
+  Future<String?> joinByInviteCode(String code) {
+    return guardRemote(() async {
+      final groupId = await _client.rpc('join_group_by_invite_code', params: {'invite_code': code});
+      return groupId as String?;
+    });
+  }
+
+  /// Leader only. Returns the new code; links already shared stop working.
+  Future<String> resetInviteCode(String groupId) {
+    return guardRemote(() async {
+      final code = await _client.rpc('reset_group_invite_code', params: {'target_group_id': groupId});
+      return code as String;
+    });
+  }
+
   /// Leader only. Fails while the group already has a trip open.
   Future<void> planTrip({required String groupId, required Place destination, required RouteResult route}) {
     return _rpc('plan_group_trip', {
@@ -105,17 +129,33 @@ class GroupRepository {
         },
       );
 
+  @visibleForTesting
+  static GroupInvitePreview previewFromRow(Map<String, dynamic> row) => _previewFromRow(row);
+
+  static GroupInvitePreview _previewFromRow(Map<String, dynamic> row) => GroupInvitePreview(
+        groupId: row['group_id'] as String,
+        name: row['name'] as String,
+        leaderUsername: row['leader_username'] as String?,
+        memberCount: (row['member_count'] as num).toInt(),
+        myStatus: switch (row['my_status']) {
+          final String status => _memberStatusFrom(status),
+          _ => null,
+        },
+      );
+
+  static MemberStatus _memberStatusFrom(String status) => switch (status) {
+        'pending' => MemberStatus.pending,
+        'left' => MemberStatus.left,
+        'fell_behind' => MemberStatus.fellBehind,
+        _ => MemberStatus.joined,
+      };
+
   static GroupMember _memberFromRow(Map<String, dynamic> row) => GroupMember(
         userId: row['user_id'] as String,
         username: row['username'] as String?,
         avatarUrl: row['avatar_url'] as String?,
         role: GroupRole.values.byName(row['role'] as String),
-        status: switch (row['status'] as String) {
-          'pending' => MemberStatus.pending,
-          'left' => MemberStatus.left,
-          'fell_behind' => MemberStatus.fellBehind,
-          _ => MemberStatus.joined,
-        },
+        status: _memberStatusFrom(row['status'] as String),
         joinedAt: DateTime.parse(row['joined_at'] as String),
       );
 

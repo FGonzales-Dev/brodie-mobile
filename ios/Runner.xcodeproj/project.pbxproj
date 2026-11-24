@@ -383,6 +383,7 @@
 					"@executable_path/Frameworks",
 				);
 				DEVELOPMENT_TEAM = D7R4GPK2F5;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.brodie.brodie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -563,6 +564,7 @@
 					"@executable_path/Frameworks",
 				);
 				DEVELOPMENT_TEAM = D7R4GPK2F5;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.brodie.brodie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
@@ -586,6 +588,7 @@
 					"@executable_path/Frameworks",
 				);
 				DEVELOPMENT_TEAM = D7R4GPK2F5;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				PRODUCT_BUNDLE_IDENTIFIER = com.brodie.brodie;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";

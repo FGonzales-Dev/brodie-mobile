@@ -42,3 +42,10 @@ class PendingInvitesController extends _$PendingInvitesController {
     await future;
   }
 }
+
+/// The group behind an invite code, for the join screen; null when the code
+/// matches none.
+@riverpod
+Future<GroupInvitePreview?> groupInvitePreview(Ref ref, String code) {
+  return ref.watch(groupRepositoryProvider).fetchInvitePreview(code);
+}

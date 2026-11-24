@@ -66,3 +66,17 @@ abstract class GroupTrip with _$GroupTrip {
     DateTime? startedAt,
   }) = _GroupTrip;
 }
+
+/// What the join screen shows for an invite code before the rider joins.
+@freezed
+abstract class GroupInvitePreview with _$GroupInvitePreview {
+  const factory GroupInvitePreview({
+    required String groupId,
+    required String name,
+    String? leaderUsername,
+    required int memberCount,
+
+    /// The rider's membership in the group, if any.
+    MemberStatus? myStatus,
+  }) = _GroupInvitePreview;
+}

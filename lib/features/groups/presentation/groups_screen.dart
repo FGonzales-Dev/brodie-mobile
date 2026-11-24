@@ -50,7 +50,7 @@ class GroupsScreen extends ConsumerWidget {
                         const EmptyState(
                           icon: Icons.groups_outlined,
                           title: 'No groups yet',
-                          message: 'Create a group, share the code, and ride together.',
+                          message: 'Create a group and share its invite link, or join one with a code.',
                         )
                       else ...[
                         const SectionLabel('Your groups'),
@@ -63,10 +63,24 @@ class GroupsScreen extends ConsumerWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(BrodieSpace.md),
-              child: BrodieButton(
-                label: 'New group ride',
-                icon: Icons.add,
-                onPressed: () => context.push(Routes.createGroup),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: BrodieButton.secondary(
+                      label: 'Join with code',
+                      icon: Icons.key,
+                      onPressed: () => context.push(Routes.joinWithCode),
+                    ),
+                  ),
+                  const SizedBox(width: BrodieSpace.sm),
+                  Expanded(
+                    child: BrodieButton(
+                      label: 'New group',
+                      icon: Icons.add,
+                      onPressed: () => context.push(Routes.createGroup),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

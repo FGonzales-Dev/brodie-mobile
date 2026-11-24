@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:brodie/app/brodie_app.dart';
+import 'package:brodie/app/router/app_router.dart';
+import 'package:brodie/app/router/routes.dart';
 import 'package:brodie/core/di/core_providers.dart';
 import 'package:brodie/features/auth/data/auth_repository.dart';
 import 'package:brodie/features/auth/domain/app_user.dart';
 import 'package:brodie/features/auth/domain/sign_up_outcome.dart';
+import 'package:brodie/features/groups/data/group_repository.dart';
+import 'package:brodie/features/groups/domain/group_models.dart';
 import 'package:brodie/features/map/data/location_repository.dart';
 import 'package:brodie/features/map/domain/map_models.dart';
 import 'package:brodie/features/profile/application/my_profile_provider.dart';
@@ -32,6 +38,41 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {}
+}
+
+/// Starts signed out; [signInAs] signs in, like the real auth stream.
+class _SwitchableAuthRepository implements AuthRepository {
+  final _changes = StreamController<AppUser?>.broadcast();
+
+  @override
+  AppUser? currentUser;
+
+  void signInAs(AppUser user) {
+    currentUser = user;
+    _changes.add(user);
+  }
+
+  @override
+  Stream<AppUser?> userChanges() => _changes.stream;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _InviteGroups implements GroupRepository {
+  @override
+  Future<GroupInvitePreview?> fetchInvitePreview(String code) async => code == '7A879D'
+      ? const GroupInvitePreview(groupId: 'group-1', name: 'Sunday crew', leaderUsername: 'lea', memberCount: 3)
+      : null;
+
+  @override
+  Future<List<GroupInvite>> fetchPendingInvites() async => const [];
+
+  @override
+  Future<List<RideGroup>> fetchMyGroups() async => const [];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _DeniedLocationRepository extends LocationRepository {
@@ -77,5 +118,37 @@ void main() {
     }
     // Location is denied in this test, so the map shows its permission gate.
     expect(find.text('LOCATION NEEDED'), findsOneWidget);
+  });
+
+  testWidgets('an invite link opened while signed out opens after signing in', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final auth = _SwitchableAuthRepository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          mapboxAccessTokenProvider.overrideWithValue('test-token'),
+          authRepositoryProvider.overrideWithValue(auth),
+          locationRepositoryProvider.overrideWithValue(_DeniedLocationRepository()),
+          groupRepositoryProvider.overrideWithValue(_InviteGroups()),
+          myProfileProvider.overrideWith((ref) async => const Profile(id: 'user-1', username: 'alex_rides')),
+        ],
+        child: const BrodieApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final router = ProviderScope.containerOf(tester.element(find.byType(BrodieApp))).read(routerProvider);
+
+    router.go(Routes.join('7A879D'));
+    await tester.pumpAndSettle();
+    expect(find.text('SIGN IN'), findsOneWidget);
+
+    auth.signInAs(user);
+    await tester.pumpAndSettle();
+
+    expect(find.text('SUNDAY CREW'), findsOneWidget);
+    expect(find.text('Led by @lea · 3 riders'), findsOneWidget);
+    expect(find.text('JOIN GROUP'), findsOneWidget);
   });
 }

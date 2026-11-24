@@ -14,6 +14,13 @@ abstract final class Routes {
   static const groups = '/groups';
   static const createGroup = '/groups/create';
   static const pendingInvites = '/groups/invites';
+  static const joinWithCode = '/groups/join';
+
+  /// Invite links (`https://<site>/join/<code>`) arrive on this path.
+  static const joinPattern = '/join/:code';
+  static String join(String code) => '/join/$code';
+  static bool isJoinLink(String location) => location.startsWith('/join/');
+
   static const groupPattern = '/groups/:groupId';
   static String group(String groupId) => '/groups/$groupId';
   static const groupInvitePattern = '/groups/:groupId/invite';

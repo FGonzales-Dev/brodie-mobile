@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Group invite links open in the app; the site serves
+	     .well-known/apple-app-site-association (see brodie-links).
+	     Keep the host in sync with InviteLinks.host. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:brodie-app.pages.dev</string>
+	</array>
+</dict>
+</plist>

@@ -12,6 +12,7 @@ import '../../features/groups/presentation/create_group_screen.dart';
 import '../../features/groups/presentation/group_screen.dart';
 import '../../features/groups/presentation/groups_screen.dart';
 import '../../features/groups/presentation/invite_screen.dart';
+import '../../features/groups/presentation/join_group_screen.dart';
 import '../../features/groups/presentation/pending_invites_screen.dart';
 import '../../features/history/presentation/history_screen.dart';
 import '../../features/history/presentation/ride_detail_screen.dart';
@@ -34,6 +35,7 @@ part 'app_router.g.dart';
 GoRouter router(Ref ref) {
   // Re-run redirects whenever the session or profile changes.
   final refresh = ValueNotifier(0);
+  final pending = _PendingLink();
   ref
     ..listen(currentUserProvider, (_, _) => refresh.value++)
     ..listen(myProfileProvider, (_, _) => refresh.value++);
@@ -41,7 +43,7 @@ GoRouter router(Ref ref) {
   final router = GoRouter(
     initialLocation: Routes.splash,
     refreshListenable: refresh,
-    redirect: (_, state) => _redirect(ref, state.matchedLocation),
+    redirect: (_, state) => _redirect(ref, state.matchedLocation, pending),
     routes: [
       GoRoute(path: Routes.splash, builder: (_, _) => const SplashScreen()),
       GoRoute(path: Routes.signIn, builder: (_, _) => const SignInScreen()),
@@ -59,6 +61,11 @@ GoRouter router(Ref ref) {
       ),
       GoRoute(path: Routes.createGroup, builder: (_, _) => const CreateGroupScreen()),
       GoRoute(path: Routes.pendingInvites, builder: (_, _) => const PendingInvitesScreen()),
+      GoRoute(path: Routes.joinWithCode, builder: (_, _) => const JoinWithCodeScreen()),
+      GoRoute(
+        path: Routes.joinPattern,
+        builder: (_, state) => JoinGroupScreen(code: state.pathParameters['code']!),
+      ),
       // After the fixed /groups/... paths above, which this pattern would also match.
       GoRoute(
         path: Routes.groupPattern,
@@ -101,20 +108,37 @@ GoRouter router(Ref ref) {
   return router;
 }
 
+/// An invite link opened before the app could show it (signed out, profile
+/// still loading, or no username yet), kept until the gates pass.
+class _PendingLink {
+  String? location;
+
+  String? take() {
+    final taken = location;
+    location = null;
+    return taken;
+  }
+}
+
 /// Gates, in order: signed in → profile loaded → username chosen → app.
-String? _redirect(Ref ref, String location) {
+String? _redirect(Ref ref, String location, _PendingLink pending) {
+  String? gate(String to, {required bool alreadyThere}) {
+    if (Routes.isJoinLink(location)) pending.location = location;
+    return alreadyThere ? null : to;
+  }
+
   if (ref.read(currentUserProvider) == null) {
-    return Routes.signedOut.contains(location) ? null : Routes.signIn;
+    return gate(Routes.signIn, alreadyThere: Routes.signedOut.contains(location));
   }
 
   // Splash covers the first load and load failures (it offers a retry).
   final profile = ref.read(myProfileProvider);
-  if (!profile.hasValue) return location == Routes.splash ? null : Routes.splash;
+  if (!profile.hasValue) return gate(Routes.splash, alreadyThere: location == Routes.splash);
 
   if (!(profile.value?.hasUsername ?? false)) {
-    return location == Routes.chooseUsername ? null : Routes.chooseUsername;
+    return gate(Routes.chooseUsername, alreadyThere: location == Routes.chooseUsername);
   }
 
   const gateRoutes = {Routes.splash, Routes.chooseUsername, ...Routes.signedOut};
-  return gateRoutes.contains(location) ? Routes.map : null;
+  return gateRoutes.contains(location) ? (pending.take() ?? Routes.map) : null;
 }
