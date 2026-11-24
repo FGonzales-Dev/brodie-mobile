@@ -39,3 +39,8 @@ Measurement formatDuration(Duration duration) {
   final remainder = (minutes % 60).toString().padLeft(2, '0');
   return (value: '${duration.inHours}:$remainder', unit: 'hrs');
 }
+
+extension MeasurementText on Measurement {
+  /// "4.0 km", "45 min": the value and unit as one piece of text.
+  String get text => '$value $unit';
+}

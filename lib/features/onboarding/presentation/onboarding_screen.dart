@@ -6,11 +6,11 @@ import '../../../core/presentation/feedback.dart';
 import '../../../core/presentation/refresh_on_resume.dart';
 import '../../../core/utils/validators.dart';
 import '../../auth/presentation/widgets/road_art.dart';
-import '../../emergency_contacts/presentation/emergency_contacts_screen.dart';
+import '../../emergency_contacts/application/emergency_contact_providers.dart';
 import '../../map/application/location_access_controller.dart';
 import '../../map/domain/map_models.dart';
+import '../../vehicles/application/vehicle_providers.dart';
 import '../../vehicles/domain/vehicle.dart';
-import '../../vehicles/presentation/vehicles_screen.dart';
 import '../data/onboarding_store.dart';
 
 /// First run, after the username: what Brodie does, why it needs location
@@ -481,18 +481,8 @@ class _Done extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return BrodieCard(
-      child: Row(
-        children: [
-          Icon(Icons.check_circle, color: colors.success),
-          const SizedBox(width: BrodieSpace.sm),
-          Expanded(child: Text(text, style: BrodieType.bodyStrong.copyWith(color: colors.textPrimary))),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      BrodieAlert(icon: Icons.check_circle, color: context.colors.success, message: text, margin: EdgeInsets.zero);
 }
 
 class _Note extends StatelessWidget {
@@ -501,16 +491,6 @@ class _Note extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return BrodieCard(
-      child: Row(
-        children: [
-          Icon(Icons.info_outline, color: colors.warning),
-          const SizedBox(width: BrodieSpace.sm),
-          Expanded(child: Text(text, style: BrodieType.body.copyWith(color: colors.textPrimary))),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      BrodieAlert(icon: Icons.info_outline, color: context.colors.warning, message: text, margin: EdgeInsets.zero);
 }

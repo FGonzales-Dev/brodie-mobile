@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design_system/design_system.dart';
+import '../../../core/presentation/time_labels.dart';
 import '../data/usage_repository.dart';
 import '../domain/api_usage.dart';
 
@@ -52,7 +53,7 @@ class _UsageCard extends StatelessWidget {
         : fraction <= .2
             ? colors.warning
             : colors.primaryAction;
-    final resetsAt = MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(usage.resetsAt));
+    final resetsAt = clockLabel(context, usage.resetsAt);
 
     return BrodieCard(
       child: Column(

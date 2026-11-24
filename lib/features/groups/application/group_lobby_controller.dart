@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../group_ride/application/group_ride_controller.dart';
 import '../../group_ride/domain/group_ride_models.dart';
 import '../../map/data/directions_repository.dart';
 import '../../map/data/location_repository.dart';
@@ -37,11 +36,20 @@ class GroupLobbyController extends _$GroupLobbyController {
     return (trip: trip, riders: await repository.fetchTripRiders(trip.id));
   }
 
+  var _hidden = false;
+
+  /// Call when the lobby is covered by another screen (e.g. the ride) or
+  /// shown again. While hidden it stops checking the server every few
+  /// seconds; when shown again it catches up at once.
+  void setVisible(bool visible) {
+    final wasHidden = _hidden;
+    _hidden = !visible;
+    if (visible && wasHidden) unawaited(_refreshQuietly());
+  }
+
   /// Keeps what's on screen when a background refresh fails (e.g. no signal).
-  /// Paused while this group's ride screen is open: the ride keeps itself up
-  /// to date, and the lobby underneath isn't visible.
   Future<void> _refreshQuietly() async {
-    if (state.isLoading || ref.exists(groupRideControllerProvider(groupId))) return;
+    if (state.isLoading || _hidden) return;
     try {
       final lobby = await _load();
       if (ref.mounted) state = AsyncData(lobby);

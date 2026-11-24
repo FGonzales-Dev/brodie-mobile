@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// A camera-style JPEG: landscape pixels, an "rotate 90°" orientation tag,
 /// and the GPS position it was taken at.
@@ -15,6 +16,20 @@ Uint8List _cameraPhoto() {
   image.exif.imageIfd.orientation = 6;
   image.exif.gpsIfd.setGpsLocation(latitude: 14.1153, longitude: 120.9621);
   return img.encodeJpg(image, quality: 90);
+}
+
+/// Storage without a server: uploads get numbered paths, deletes are recorded.
+class _FakeStorage extends PhotoStorage {
+  _FakeStorage() : super(SupabaseClient('http://localhost', 'test-key'));
+
+  final deleted = <String>[];
+  var uploads = 0;
+
+  @override
+  Future<String> upload(PhotoBucket bucket, Uint8List jpeg) async => 'user-1/new-${++uploads}.jpg';
+
+  @override
+  Future<void> delete(PhotoBucket bucket, String path) async => deleted.add(path);
 }
 
 void main() {
@@ -71,5 +86,34 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('L'), findsOneWidget);
+  });
+
+  group('replacing and removing a photo', () {
+    final jpeg = Uint8List.fromList([1, 2, 3]);
+
+    test('the owner points at the new file, then the old one is deleted', () async {
+      final storage = _FakeStorage();
+      String? saved;
+      await storage.replace(PhotoBucket.avatars, jpeg, save: (path) async => saved = path, replaces: 'user-1/old.jpg');
+      expect(saved, 'user-1/new-1.jpg');
+      expect(storage.deleted, ['user-1/old.jpg']);
+    });
+
+    test('if saving fails, the new upload is deleted and the old photo kept', () async {
+      final storage = _FakeStorage();
+      await expectLater(
+        storage.replace(PhotoBucket.avatars, jpeg, save: (_) => Future.error(Exception('offline')), replaces: 'user-1/old.jpg'),
+        throwsException,
+      );
+      expect(storage.deleted, ['user-1/new-1.jpg']);
+    });
+
+    test('removing unlinks first, then deletes the file', () async {
+      final storage = _FakeStorage();
+      final order = <String>[];
+      await storage.remove(PhotoBucket.vehicles, 'user-1/bike.jpg', clear: () async => order.add('cleared'));
+      order.addAll(storage.deleted);
+      expect(order, ['cleared', 'user-1/bike.jpg']);
+    });
   });
 }

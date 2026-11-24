@@ -49,19 +49,6 @@ abstract class TripRoute with _$TripRoute {
   }) = _TripRoute;
 }
 
-@freezed
-abstract class TripSession with _$TripSession {
-  const factory TripSession({
-    required String tripId,
-    required String groupId,
-    required String leaderId,
-    required int mySeat,
-    DateTime? startedAt,
-    required TripRoute route,
-    required List<TripRider> roster,
-  }) = _TripSession;
-}
-
 /// How recently a rider was heard from, judged by when their last message
 /// arrived (not the time they claim).
 enum RiderStatus {

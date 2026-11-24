@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/design_system/design_system.dart';
+import '../../../../core/presentation/time_labels.dart';
 import '../../../../core/utils/units.dart';
 import '../../../settings/application/settings_controller.dart';
 import '../../domain/map_models.dart';
+import '../widgets/ride_panel.dart';
 import 'solo_ride_controller.dart';
-
-String _clockAt(BuildContext context, DateTime time) =>
-    MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(time));
 
 /// Next turn at the top of the ride screen: arrow, distance and instruction.
 /// Also shows rerouting, waiting for GPS, and notices such as a reached limit.
@@ -34,7 +33,7 @@ class ManeuverBanner extends ConsumerWidget {
       _ when maneuver == null => (Icon(Icons.sports_score, size: 40, color: colors.onPrimaryAction), 'Almost there', ride.destination.name),
       _ => (
           Icon(maneuverIcon(maneuver), size: 44, color: colors.onPrimaryAction),
-          _distanceLabel(formatShortDistance(progress.distanceToManeuverMeters!, units)),
+          formatShortDistance(progress.distanceToManeuverMeters!, units).text,
           maneuver.instruction,
         ),
     };
@@ -62,22 +61,10 @@ class ManeuverBanner extends ConsumerWidget {
             ],
           ),
         ),
-        if (ride.notice != null)
-          Container(
-            margin: const EdgeInsets.only(top: BrodieSpace.xs),
-            padding: const EdgeInsets.all(BrodieSpace.sm),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BrodieSize.borderRadius,
-              border: Border.all(color: colors.warning, width: BrodieSize.border),
-            ),
-            child: Text(ride.notice!, style: BrodieType.body.copyWith(color: colors.textPrimary)),
-          ),
+        if (ride.notice case final notice?) BrodieAlert(icon: Icons.info_outline, color: colors.warning, message: notice),
       ],
     );
   }
-
-  static String _distanceLabel(Measurement distance) => '${distance.value} ${distance.unit}';
 }
 
 /// Speed, distance left and arrival time, with the Reroute and End buttons.
@@ -97,10 +84,10 @@ class RideHud extends ConsumerWidget {
     final progress = ride.progress;
     final speed = formatSpeed(ride.lastFix?.speedMps ?? 0, units);
     final remaining = formatDistance(progress?.distanceRemainingMeters ?? ride.route.distanceMeters, units);
-    final arrival = progress == null ? '--' : _clockAt(context, DateTime.now().add(progress.timeRemaining));
+    final arrival = progress == null ? '--' : clockLabel(context, DateTime.now().add(progress.timeRemaining));
     final offRoute = (progress?.distanceFromRouteMeters ?? 0) > offRouteMeters;
 
-    return _BottomPanel(
+    return RidePanel(
       children: [
         Row(
           children: [
@@ -148,7 +135,7 @@ class ArrivalPanel extends ConsumerWidget {
     final ridden = formatDistance(ride.distanceRiddenMeters, units);
     final rideTime = formatDuration(arrivedAt.difference(ride.startedAt));
 
-    return _BottomPanel(
+    return RidePanel(
       accent: colors.success,
       children: [
         Row(
@@ -173,37 +160,12 @@ class ArrivalPanel extends ConsumerWidget {
             const SizedBox(width: BrodieSpace.xs),
             Expanded(child: StatTile(value: rideTime.value, unit: rideTime.unit)),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: _clockAt(context, arrivedAt), unit: 'arrived')),
+            Expanded(child: StatTile(value: clockLabel(context, arrivedAt), unit: 'arrived')),
           ],
         ),
         const SizedBox(height: BrodieSpace.sm),
         BrodieButton(label: 'Done', icon: Icons.check, onPressed: onDone),
       ],
-    );
-  }
-}
-
-class _BottomPanel extends StatelessWidget {
-  const _BottomPanel({required this.children, this.accent});
-
-  final List<Widget> children;
-  final Color? accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(top: BorderSide(color: accent ?? colors.accent, width: 3)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.all(BrodieSpace.md),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
-        ),
-      ),
     );
   }
 }

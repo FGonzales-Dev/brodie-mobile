@@ -11,8 +11,9 @@ import '../../../app/router/routes.dart';
 import '../../../core/design_system/design_system.dart';
 import '../../../core/presentation/feedback.dart';
 import '../../../core/presentation/keep_screen_on.dart';
+import '../../../core/presentation/time_labels.dart';
+import '../../emergency_contacts/application/emergency_contact_providers.dart';
 import '../../emergency_contacts/domain/emergency_contact.dart';
-import '../../emergency_contacts/presentation/emergency_contacts_screen.dart';
 import '../../group_ride/application/group_ride_controller.dart';
 import '../../map/data/location_repository.dart';
 import '../../map/domain/map_models.dart';
@@ -128,7 +129,7 @@ class _SosScreenState extends ConsumerState<SosScreen> {
   Future<void> _openText() async {
     final time = _fix == null
         ? ''
-        : MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(_fix!.timestamp.toLocal()));
+        : clockLabel(context, _fix!.timestamp);
     final body = SosMessage.text(username: ref.read(myProfileProvider).value?.username, fix: _fix, time: time);
     final uri = SosMessage.smsUri(
       [for (final contact in _contacts) contact.phone],
@@ -421,38 +422,6 @@ class _Step extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// The SOS button on the ride screens: red, labelled, and big enough to hit
-/// with gloves. It only opens the countdown, so a mis-tap can be cancelled.
-class SosButton extends StatelessWidget {
-  const SosButton({super.key, required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Semantics(
-      button: true,
-      label: 'SOS. Opens a countdown before alerting anyone.',
-      child: Material(
-        color: colors.danger,
-        shape: const CircleBorder(side: BorderSide(color: Color(0xFFFFFFFF), width: 3)),
-        elevation: 4,
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onPressed,
-          child: SizedBox.square(
-            dimension: 64,
-            child: Center(
-              child: Text('SOS', style: BrodieType.stat.copyWith(color: const Color(0xFFFFFFFF), fontSize: 22)),
-            ),
-          ),
         ),
       ),
     );

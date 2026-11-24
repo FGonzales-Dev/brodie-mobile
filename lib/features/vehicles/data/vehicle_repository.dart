@@ -36,22 +36,17 @@ class VehiclePhotoRepository {
   final PhotoStorage _photos;
 
   /// Uploads [jpeg] as [vehicle]'s photo, then removes the old one.
-  Future<void> setPhoto(Vehicle vehicle, Uint8List jpeg) async {
-    final path = await _photos.upload(PhotoBucket.vehicles, jpeg);
-    try {
-      await _setPath(vehicle.id, path);
-    } catch (_) {
-      await _photos.delete(PhotoBucket.vehicles, path);
-      rethrow;
-    }
-    final old = vehicle.photoPath;
-    if (old != null) await _photos.delete(PhotoBucket.vehicles, old);
-  }
+  Future<void> setPhoto(Vehicle vehicle, Uint8List jpeg) => _photos.replace(
+        PhotoBucket.vehicles,
+        jpeg,
+        save: (path) => _setPath(vehicle.id, path),
+        replaces: vehicle.photoPath,
+      );
 
   Future<void> removePhoto(Vehicle vehicle) async {
     final old = vehicle.photoPath;
-    await _setPath(vehicle.id, null);
-    if (old != null) await _photos.delete(PhotoBucket.vehicles, old);
+    if (old == null) return;
+    await _photos.remove(PhotoBucket.vehicles, old, clear: () => _setPath(vehicle.id, null));
   }
 
   /// Also removes the photo file, which deleting the row leaves behind.

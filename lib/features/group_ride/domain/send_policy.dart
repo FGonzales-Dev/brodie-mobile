@@ -44,13 +44,6 @@ class SendProfile {
     heartbeat: Duration(seconds: 120),
   );
 
-  /// Before the ride starts, while riders gather.
-  static const lobby = SendProfile(
-    minInterval: Duration(seconds: 30),
-    minDistanceMeters: 50,
-    heartbeat: Duration(seconds: 120),
-  );
-
   /// The profile for a started ride; background wins over battery saver.
   factory SendProfile.forRide({required int intervalSeconds, required bool batterySaver, required bool inBackground}) {
     if (inBackground) return background;

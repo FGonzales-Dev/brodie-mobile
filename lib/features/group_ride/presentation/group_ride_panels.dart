@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design_system/design_system.dart';
+import '../../../core/presentation/time_labels.dart';
 import '../../../core/utils/units.dart';
 import '../../map/presentation/widgets/location_issue_banner.dart';
+import '../../map/presentation/widgets/ride_panel.dart';
 import '../../settings/application/settings_controller.dart';
 import '../application/group_ride_controller.dart';
 import '../domain/group_ride_models.dart';
 import 'rider_markers.dart';
-
-String _clockAt(BuildContext context, DateTime time) =>
-    MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(time));
 
 /// Top of the ride screen: the ride and who's online, then alerts: riders
 /// who sent an SOS (first), this rider's own SOS, and anyone who fell behind.
@@ -81,30 +80,11 @@ class _OfflineNote extends StatelessWidget {
   const _OfflineNote();
 
   @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Container(
-      margin: const EdgeInsets.only(top: BrodieSpace.xs),
-      padding: const EdgeInsets.all(BrodieSpace.sm),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BrodieSize.borderRadius,
-        border: Border.all(color: colors.warning, width: BrodieSize.border),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.wifi_off, color: colors.warning),
-          const SizedBox(width: BrodieSpace.sm),
-          Expanded(
-            child: Text(
-              "No connection. Other riders' positions are from before it dropped; yours is still sent when possible.",
-              style: BrodieType.caption.copyWith(color: colors.textPrimary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => BrodieAlert(
+        icon: Icons.wifi_off,
+        color: context.colors.warning,
+        message: "No connection. Other riders' positions are from before it dropped; yours is still sent when possible.",
+      );
 }
 
 class _SosAlert extends ConsumerWidget {
@@ -115,44 +95,20 @@ class _SosAlert extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.colors;
-    const onDanger = Color(0xFFFFFFFF);
     final units = ref.watch(settingsControllerProvider.select((settings) => settings.units));
-    final name = '@${rider.rider.username ?? 'rider'}';
     final where = switch (rider.metersBehindMe) {
       null => rider.fix == null ? 'No position yet' : 'On the map',
       final double gap when gap.abs() < 100 => 'Right by you',
       final double gap when gap > 0 => '${_distance(gap, units)} behind you',
       final double gap => '${_distance(-gap, units)} ahead of you',
     };
-    return Container(
-      margin: const EdgeInsets.only(top: BrodieSpace.xs),
-      padding: const EdgeInsets.all(BrodieSpace.sm),
-      decoration: BoxDecoration(color: colors.danger, borderRadius: BrodieSize.borderRadius),
-      child: Row(
-        children: [
-          const Icon(Icons.sos, color: onDanger, size: 32),
-          const SizedBox(width: BrodieSpace.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('$name SENT AN SOS', style: BrodieType.headline.copyWith(color: onDanger, fontSize: 20)),
-                Text(
-                  '$where · since ${_clockAt(context, rider.sosAt!)}',
-                  style: BrodieType.bodyStrong.copyWith(color: onDanger),
-                ),
-              ],
-            ),
-          ),
-          if (rider.fix != null)
-            TextButton(
-              onPressed: onShow,
-              style: TextButton.styleFrom(foregroundColor: onDanger),
-              child: const Text('Show'),
-            ),
-        ],
-      ),
+    return BrodieAlert(
+      filled: true,
+      icon: Icons.sos,
+      color: context.colors.danger,
+      title: '@${rider.rider.username ?? 'rider'} sent an SOS',
+      message: '$where · since ${clockLabel(context, rider.sosAt!)}',
+      action: rider.fix == null ? null : ('Show', onShow),
     );
   }
 }
@@ -163,31 +119,12 @@ class _MySosAlert extends StatelessWidget {
   final VoidCallback onImSafe;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Container(
-      margin: const EdgeInsets.only(top: BrodieSpace.xs),
-      padding: const EdgeInsets.all(BrodieSpace.sm),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BrodieSize.borderRadius,
-        border: Border.all(color: colors.danger, width: BrodieSize.border),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.sos, color: colors.danger),
-          const SizedBox(width: BrodieSpace.sm),
-          Expanded(
-            child: Text(
-              'Your SOS is on. Your group sees where you are.',
-              style: BrodieType.bodyStrong.copyWith(color: colors.textPrimary),
-            ),
-          ),
-          TextButton(onPressed: onImSafe, child: const Text("I'm safe")),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => BrodieAlert(
+        icon: Icons.sos,
+        color: context.colors.danger,
+        message: 'Your SOS is on. Your group sees where you are.',
+        action: ("I'm safe", onImSafe),
+      );
 }
 
 class _BehindAlert extends ConsumerWidget {
@@ -197,7 +134,6 @@ class _BehindAlert extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.colors;
     final units = ref.watch(settingsControllerProvider.select((settings) => settings.units));
     final lines = [
       for (final rider in riders.take(2))
@@ -209,37 +145,11 @@ class _BehindAlert extends ConsumerWidget {
         },
       if (riders.length > 2) 'and ${riders.length - 2} more',
     ];
-
-    return Container(
-      margin: const EdgeInsets.only(top: BrodieSpace.xs),
-      padding: const EdgeInsets.all(BrodieSpace.sm),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BrodieSize.borderRadius,
-        border: Border.all(color: colors.danger, width: BrodieSize.border),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.warning_amber_rounded, color: colors.danger),
-          const SizedBox(width: BrodieSpace.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final line in lines) Text(line, style: BrodieType.bodyStrong.copyWith(color: colors.textPrimary)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return BrodieAlert(icon: Icons.warning_amber_rounded, color: context.colors.danger, message: lines.join('\n'));
   }
 }
 
-String _distance(double meters, DistanceUnit units) {
-  final distance = formatShortDistance(meters, units);
-  return '${distance.value} ${distance.unit}';
-}
+String _distance(double meters, DistanceUnit units) => formatShortDistance(meters, units).text;
 
 /// The other riders, side by side; tapping one moves the map to them.
 class RiderStrip extends ConsumerWidget {
@@ -351,7 +261,7 @@ class GroupRideHud extends ConsumerWidget {
     final progress = ride.progress;
     final speed = formatSpeed(ride.lastFix?.speedMps ?? 0, units);
     final remaining = formatDistance(progress?.distanceRemainingMeters ?? ride.trip.route.distanceMeters, units);
-    final arrival = progress == null ? '--' : _clockAt(context, DateTime.now().add(progress.timeRemaining));
+    final arrival = progress == null ? '--' : clockLabel(context, DateTime.now().add(progress.timeRemaining));
 
     return RidePanel(
       children: [
@@ -420,38 +330,12 @@ class GroupRideEndedPanel extends ConsumerWidget {
             const SizedBox(width: BrodieSpace.xs),
             Expanded(child: StatTile(value: rideTime.value, unit: rideTime.unit)),
             const SizedBox(width: BrodieSpace.xs),
-            Expanded(child: StatTile(value: _clockAt(context, endedAt), unit: 'ended')),
+            Expanded(child: StatTile(value: clockLabel(context, endedAt), unit: 'ended')),
           ],
         ),
         const SizedBox(height: BrodieSpace.sm),
         BrodieButton(label: 'Done', icon: Icons.check, onPressed: onDone),
       ],
-    );
-  }
-}
-
-/// The bottom panel shared by the HUD and the ended panel.
-class RidePanel extends StatelessWidget {
-  const RidePanel({super.key, required this.children, this.accent});
-
-  final List<Widget> children;
-  final Color? accent;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.surface,
-        border: Border(top: BorderSide(color: accent ?? colors.accent, width: 3)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.all(BrodieSpace.md),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
-        ),
-      ),
     );
   }
 }

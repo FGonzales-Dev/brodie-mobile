@@ -5,9 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/routes.dart';
 import '../../../core/design_system/design_system.dart';
 import '../../../core/presentation/feedback.dart';
+import '../../../core/presentation/time_labels.dart';
 import '../../map/presentation/widgets/route_overview_map.dart';
+import '../../vehicles/application/vehicle_providers.dart';
 import '../../vehicles/domain/vehicle.dart';
-import '../../vehicles/presentation/vehicles_screen.dart';
+import '../../vehicles/presentation/widgets/vehicle_icon.dart';
 import '../application/ride_providers.dart';
 import '../domain/ride.dart';
 import 'ride_widgets.dart';
@@ -68,7 +70,7 @@ class RideDetailScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: BrodieSpace.xxs),
                   Text(
-                    '${rideStartLabel(context, ride)} · ${ride.arrived ? 'Arrived' : 'Ended early'}',
+                    '${dateTimeLabel(context, ride.startedAt)} · ${ride.arrived ? 'Arrived' : 'Ended early'}',
                     style: BrodieType.body.copyWith(color: context.colors.textSecondary),
                   ),
                   _UploadStatus(rideId: ride.id, justFinished: justFinished),

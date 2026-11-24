@@ -7,14 +7,17 @@ import 'package:go_router/go_router.dart';
 import '../../../app/router/routes.dart';
 import '../../../core/design_system/design_system.dart';
 import '../../../core/presentation/feedback.dart';
+import '../../../core/presentation/time_labels.dart';
 import '../../../core/utils/units.dart';
 import '../../settings/application/settings_controller.dart';
+import '../../vehicles/application/vehicle_providers.dart';
 import '../../vehicles/domain/vehicle.dart';
-import '../../vehicles/presentation/vehicles_screen.dart';
+import '../../vehicles/presentation/widgets/vehicle_icon.dart';
 import '../application/ride_providers.dart';
 import '../domain/ride.dart';
 import '../domain/ride_filter.dart';
 import 'ride_widgets.dart';
+import 'widgets/history_filters.dart';
 
 /// Past rides, filtered by kind, period and vehicle and sorted as the rider
 /// chooses (newest first by default), with totals for what matches. Rides
@@ -130,7 +133,7 @@ class HistoryScreen extends ConsumerWidget {
                 onChanged: (kind) => ref.read(rideFilterControllerProvider.notifier).update((f) => f.copyWith(kind: kind)),
               ),
             ),
-            const _TotalsLine(),
+            const HistoryTotalsLine(),
             Expanded(child: body),
           ],
         ),
@@ -143,119 +146,7 @@ class HistoryScreen extends ConsumerWidget {
       context: context,
       showDragHandle: true,
       isScrollControlled: true,
-      builder: (_) => _FilterSheet(vehicles: vehicles),
-    );
-  }
-}
-
-/// "12 rides · 340 km · 14 h riding" for what the filters match, plus a way
-/// to clear them.
-class _TotalsLine extends ConsumerWidget {
-  const _TotalsLine();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.colors;
-    final units = ref.watch(settingsControllerProvider.select((settings) => settings.units));
-    final filter = ref.watch(rideFilterControllerProvider);
-    final totals = ref.watch(rideHistoryTotalsProvider).value;
-    final text = switch (totals) {
-      null => ' ',
-      (count: 0, distanceMeters: _, movingTime: _) => filter.activeCount > 0 ? 'No matching rides' : ' ',
-      (:final count, :final distanceMeters, :final movingTime) => [
-          '$count ${count == 1 ? 'ride' : 'rides'}',
-          switch (formatDistance(distanceMeters, units)) { final d => '${d.value} ${d.unit}' },
-          switch (formatDuration(movingTime)) { final t => '${t.value} ${t.unit} riding' },
-        ].join(' · '),
-    };
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(BrodieSpace.md, 0, BrodieSpace.xs, BrodieSpace.xs),
-      child: Row(
-        children: [
-          Expanded(child: Text(text, style: BrodieType.caption.copyWith(color: colors.textSecondary))),
-          if (!filter.isDefault)
-            TextButton(onPressed: ref.read(rideFilterControllerProvider.notifier).clear, child: const Text('Clear')),
-        ],
-      ),
-    );
-  }
-}
-
-/// Period, vehicle and sort. Changes apply as soon as they're tapped.
-class _FilterSheet extends ConsumerWidget {
-  const _FilterSheet({required this.vehicles});
-
-  final List<Vehicle> vehicles;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.colors;
-    final filter = ref.watch(rideFilterControllerProvider);
-    final controller = ref.read(rideFilterControllerProvider.notifier);
-
-    Widget chip(String label, bool selected, VoidCallback onTap) => ChoiceChip(
-          label: Text(label),
-          selected: selected,
-          onSelected: (_) => onTap(),
-          showCheckmark: false,
-          selectedColor: colors.accent,
-          labelStyle: BrodieType.bodyStrong.copyWith(color: selected ? colors.onAccent : colors.textPrimary),
-          side: BorderSide(color: selected ? colors.accent : colors.border),
-          shape: const RoundedRectangleBorder(borderRadius: BrodieSize.borderRadius),
-        );
-
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(BrodieSpace.md, 0, BrodieSpace.md, BrodieSpace.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('FILTER & SORT', style: BrodieType.headline.copyWith(color: colors.textPrimary)),
-            const SectionLabel('When'),
-            Wrap(
-              spacing: BrodieSpace.xs,
-              runSpacing: BrodieSpace.xs,
-              children: [
-                for (final period in RidePeriod.values)
-                  chip(period.label, filter.period == period, () => controller.update((f) => f.copyWith(period: period))),
-              ],
-            ),
-            if (vehicles.isNotEmpty) ...[
-              const SectionLabel('Vehicle'),
-              Wrap(
-                spacing: BrodieSpace.xs,
-                runSpacing: BrodieSpace.xs,
-                children: [
-                  chip('Any', filter.vehicleId == null, () => controller.update((f) => f.copyWith(vehicleId: null))),
-                  for (final vehicle in vehicles)
-                    chip(
-                      vehicle.name,
-                      filter.vehicleId == vehicle.id,
-                      () => controller.update((f) => f.copyWith(vehicleId: vehicle.id)),
-                    ),
-                ],
-              ),
-            ],
-            const SectionLabel('Sort by'),
-            RadioGroup<RideSort>(
-              groupValue: filter.sort,
-              onChanged: (sort) {
-                if (sort != null) controller.update((f) => f.copyWith(sort: sort));
-              },
-              child: Column(
-                children: [
-                  for (final sort in RideSort.values)
-                    RadioListTile<RideSort>(value: sort, title: Text(sort.label), contentPadding: EdgeInsets.zero),
-                ],
-              ),
-            ),
-            const SizedBox(height: BrodieSpace.sm),
-            BrodieButton(label: 'Done', icon: Icons.check, onPressed: () => Navigator.pop(context)),
-            if (!filter.isDefault)
-              TextButton(onPressed: controller.clear, child: const Text('Clear all')),
-          ],
-        ),
-      ),
+      builder: (_) => HistoryFilterSheet(vehicles: vehicles),
     );
   }
 }
@@ -274,9 +165,9 @@ class _RideTile extends ConsumerWidget {
     final moving = formatDuration(ride.movingTime);
     final details = [
       if (ride.groupName case final group?) 'Group · $group' else if (ride.groupTripId != null) 'Group ride',
-      rideStartLabel(context, ride),
-      '${distance.value} ${distance.unit}',
-      '${moving.value} ${moving.unit}',
+      dateTimeLabel(context, ride.startedAt),
+      distance.text,
+      moving.text,
       if (waiting) 'Waiting to upload',
     ];
 

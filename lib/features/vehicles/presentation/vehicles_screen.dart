@@ -5,18 +5,12 @@ import '../../../core/design_system/design_system.dart';
 import '../../../core/photos/photo_picker.dart';
 import '../../../core/photos/photo_storage.dart';
 import '../../../core/presentation/feedback.dart';
-import '../../../core/presentation/owned_rows_controller.dart';
 import '../../../core/presentation/owned_rows_screen.dart';
 import '../../../core/utils/validators.dart';
+import '../application/vehicle_providers.dart';
 import '../data/vehicle_repository.dart';
 import '../domain/vehicle.dart';
-
-final vehiclesControllerProvider = ownedRowsControllerProvider(vehicleRepositoryProvider);
-
-IconData vehicleIcon(VehicleType type) => switch (type) {
-      VehicleType.motorcycle => Icons.two_wheeler,
-      VehicleType.bike => Icons.pedal_bike,
-    };
+import 'widgets/vehicle_icon.dart';
 
 class VehiclesScreen extends StatelessWidget {
   const VehiclesScreen({super.key});

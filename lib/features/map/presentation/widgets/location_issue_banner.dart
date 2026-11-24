@@ -94,34 +94,6 @@ class _LocationIssueBannerState extends ConsumerState<LocationIssueBanner> {
     };
     if (issue == LocationIssue.none) return const SizedBox.shrink();
 
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        margin: const EdgeInsets.only(top: BrodieSpace.xs),
-        padding: const EdgeInsets.all(BrodieSpace.sm),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BrodieSize.borderRadius,
-          border: Border.all(color: color, width: BrodieSize.border),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color),
-            const SizedBox(width: BrodieSpace.sm),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: BrodieType.bodyStrong.copyWith(color: colors.textPrimary)),
-                  Text(message, style: BrodieType.caption.copyWith(color: colors.textSecondary)),
-                ],
-              ),
-            ),
-            if (action case (final label, final onPressed))
-              TextButton(onPressed: onPressed, child: Text(label)),
-          ],
-        ),
-      ),
-    );
+    return BrodieAlert(icon: icon, color: color, title: title, message: message, action: action);
   }
 }

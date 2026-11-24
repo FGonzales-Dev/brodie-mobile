@@ -14,9 +14,10 @@ import '../../../core/presentation/keep_screen_on.dart';
 import '../../history/application/ride_providers.dart';
 import '../../map/domain/map_models.dart';
 import '../../map/presentation/widgets/map_ornaments.dart';
+import '../../map/presentation/widgets/ride_map_buttons.dart';
 import '../../map/presentation/widgets/ride_route_line.dart';
 import '../../map/presentation/widgets/route_layers.dart';
-import '../../sos/presentation/sos_screen.dart';
+import '../../sos/presentation/widgets/sos_button.dart';
 import '../application/group_ride_controller.dart';
 import 'group_ride_panels.dart';
 import 'rider_markers.dart';
@@ -264,23 +265,12 @@ class _GroupRideScreenState extends ConsumerState<GroupRideScreen> {
                   key: _bottomPanel,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(BrodieSpace.md),
-                      child: Row(
-                        children: [
-                          if (!ride.ended)
-                            SosButton(
-                              onPressed: () => context.push(Routes.sosFor(widget.groupId), extra: ride.lastFix),
-                            ),
-                          const Spacer(),
-                          if (!_following)
-                            BrodieIconButton(
-                              icon: Icons.navigation,
-                              tooltip: 'Follow me',
-                              onPressed: () => setState(() => _following = true),
-                            ),
-                        ],
-                      ),
+                    RideMapButtons(
+                      leading: ride.ended
+                          ? null
+                          : SosButton(onPressed: () => context.push(Routes.sosFor(widget.groupId), extra: ride.lastFix)),
+                      following: _following,
+                      onFollow: () => setState(() => _following = true),
                     ),
                     if (ride.ended)
                       GroupRideEndedPanel(ride: ride, onDone: _done)

@@ -69,6 +69,31 @@ class PhotoStorage {
         return path;
       });
 
+  /// Uploads [jpeg], points its owner at it with [save], then deletes the
+  /// photo it [replaces]. If saving fails, the new upload is deleted again,
+  /// so nothing is left pointing at a missing file or orphaned.
+  Future<void> replace(
+    PhotoBucket bucket,
+    Uint8List jpeg, {
+    required Future<void> Function(String path) save,
+    String? replaces,
+  }) async {
+    final path = await upload(bucket, jpeg);
+    try {
+      await save(path);
+    } catch (_) {
+      await delete(bucket, path);
+      rethrow;
+    }
+    if (replaces != null) await delete(bucket, replaces);
+  }
+
+  /// Unlinks the photo at [path] with [clear], then deletes the file.
+  Future<void> remove(PhotoBucket bucket, String path, {required Future<void> Function() clear}) async {
+    await clear();
+    await delete(bucket, path);
+  }
+
   /// Best effort: a file left behind costs a little storage, nothing more.
   Future<void> delete(PhotoBucket bucket, String path) async {
     try {

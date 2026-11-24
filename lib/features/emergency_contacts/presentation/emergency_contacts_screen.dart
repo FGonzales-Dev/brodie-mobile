@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/design_system/design_system.dart';
-import '../../../core/presentation/owned_rows_controller.dart';
 import '../../../core/presentation/owned_rows_screen.dart';
 import '../../../core/utils/validators.dart';
-import '../data/emergency_contact_repository.dart';
+import '../application/emergency_contact_providers.dart';
 import '../domain/emergency_contact.dart';
-
-final emergencyContactsControllerProvider = ownedRowsControllerProvider(emergencyContactRepositoryProvider);
 
 class EmergencyContactsScreen extends StatelessWidget {
   const EmergencyContactsScreen({super.key});

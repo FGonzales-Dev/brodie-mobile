@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../core/design_system/design_system.dart';
 import '../../../../core/errors/app_failure.dart';
+import '../../../../core/presentation/time_labels.dart';
 import '../../../../core/utils/units.dart';
 import '../../../groups/presentation/plan_group_ride_sheet.dart';
 import '../../../settings/application/settings_controller.dart';
@@ -107,8 +108,7 @@ class _RouteStats extends ConsumerWidget {
     final units = ref.watch(settingsControllerProvider.select((settings) => settings.units));
     final distance = formatDistance(route.distanceMeters, units);
     final duration = formatDuration(route.duration);
-    final arrival = MaterialLocalizations.of(context)
-        .formatTimeOfDay(TimeOfDay.fromDateTime(DateTime.now().add(route.duration)));
+    final arrival = clockLabel(context, DateTime.now().add(route.duration));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

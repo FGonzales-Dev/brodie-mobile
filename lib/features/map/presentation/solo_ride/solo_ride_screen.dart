@@ -12,10 +12,11 @@ import '../../../../core/errors/app_failure.dart';
 import '../../../../core/presentation/feedback.dart';
 import '../../../../core/presentation/keep_screen_on.dart';
 import '../../../history/application/ride_providers.dart';
-import '../../../sos/presentation/sos_screen.dart';
+import '../../../sos/presentation/widgets/sos_button.dart';
 import '../ride_planning_controller.dart';
 import '../widgets/location_issue_banner.dart';
 import '../widgets/map_ornaments.dart';
+import '../widgets/ride_map_buttons.dart';
 import '../widgets/ride_route_line.dart';
 import '../widgets/route_layers.dart';
 import 'ride_panels.dart';
@@ -228,20 +229,10 @@ class _SoloRideScreenState extends ConsumerState<SoloRideScreen> {
                   key: _bottomPanel,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(BrodieSpace.md),
-                      child: Row(
-                        children: [
-                          SosButton(onPressed: () => context.push(Routes.sos, extra: ride.lastFix)),
-                          const Spacer(),
-                          if (!_following)
-                            BrodieIconButton(
-                              icon: Icons.navigation,
-                              tooltip: 'Follow me',
-                              onPressed: () => setState(() => _following = true),
-                            ),
-                        ],
-                      ),
+                    RideMapButtons(
+                      leading: SosButton(onPressed: () => context.push(Routes.sos, extra: ride.lastFix)),
+                      following: _following,
+                      onFollow: () => setState(() => _following = true),
                     ),
                     if (ride.arrived)
                       ArrivalPanel(ride: ride, onDone: _endRide)

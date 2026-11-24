@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../../core/errors/app_failure.dart';
 import '../../../history/domain/ride.dart';
+import '../../../history/domain/ride_from_track.dart';
 import '../../application/my_location_providers.dart';
 import '../../data/directions_repository.dart';
 import '../../data/location_repository.dart';
@@ -52,10 +52,6 @@ abstract class SoloRideState with _$SoloRideState {
 class SoloRideController extends _$SoloRideController {
   /// GPS updates during a ride: often enough for turn distances and speed.
   static const _distanceFilterMeters = 5;
-
-  /// Shorter rides are false starts and aren't saved.
-  static const minSavedDistanceMeters = 200.0;
-  static const minSavedDuration = Duration(minutes: 1);
 
   late RouteTracker _tracker;
   final _track = TrackRecorder();
@@ -137,22 +133,12 @@ class SoloRideController extends _$SoloRideController {
     _fixes?.cancel();
     if (current == null) return null;
 
-    final endedAt = current.arrivedAt ?? DateTime.now();
-    final duration = endedAt.difference(current.startedAt);
-    final path = _track.path;
-    if (path.length < 2 || _track.distanceMeters < minSavedDistanceMeters || duration < minSavedDuration) return null;
-
-    return Ride(
-      id: const Uuid().v4(),
-      destinationName: current.destination.name,
-      arrived: current.arrived,
-      distanceMeters: _track.distanceMeters,
-      duration: duration,
-      movingTime: _track.movingTime,
-      maxSpeedMps: _track.maxSpeedMps,
+    return rideFromTrack(
+      _track,
       startedAt: current.startedAt,
-      endedAt: endedAt,
-      path: path,
+      endedAt: current.arrivedAt ?? DateTime.now(),
+      arrived: current.arrived,
+      destinationName: current.destination.name,
     );
   }
 

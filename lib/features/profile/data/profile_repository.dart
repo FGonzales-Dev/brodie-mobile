@@ -38,21 +38,11 @@ class ProfileRepository {
       });
 
   /// Uploads [jpeg] as the profile picture, then removes the old one.
-  Future<void> setAvatar(Uint8List jpeg, {String? replacing}) async {
-    final path = await _photos.upload(PhotoBucket.avatars, jpeg);
-    try {
-      await _setAvatarPath(path);
-    } catch (_) {
-      await _photos.delete(PhotoBucket.avatars, path);
-      rethrow;
-    }
-    if (replacing != null) await _photos.delete(PhotoBucket.avatars, replacing);
-  }
+  Future<void> setAvatar(Uint8List jpeg, {String? replacing}) =>
+      _photos.replace(PhotoBucket.avatars, jpeg, save: _setAvatarPath, replaces: replacing);
 
-  Future<void> removeAvatar(String path) async {
-    await _setAvatarPath(null);
-    await _photos.delete(PhotoBucket.avatars, path);
-  }
+  Future<void> removeAvatar(String path) =>
+      _photos.remove(PhotoBucket.avatars, path, clear: () => _setAvatarPath(null));
 
   Future<void> _setAvatarPath(String? path) => guardRemote(() async {
         final userId = _client.auth.currentUser?.id ?? (throw const UnauthenticatedFailure());

@@ -8,12 +8,6 @@ import '../domain/ride.dart';
 
 String rideTitle(Ride ride) => ride.destinationName ?? 'Ride';
 
-/// Date and start time, e.g. "Sat, Nov 2 · 8:04 AM".
-String rideStartLabel(BuildContext context, Ride ride) {
-  final localizations = MaterialLocalizations.of(context);
-  final time = localizations.formatTimeOfDay(TimeOfDay.fromDateTime(ride.startedAt));
-  return '${localizations.formatMediumDate(ride.startedAt)} · $time';
-}
 
 /// Distance and moving time, then average and top speed.
 class RideStats extends ConsumerWidget {

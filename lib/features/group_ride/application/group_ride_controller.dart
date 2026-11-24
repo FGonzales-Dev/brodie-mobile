@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../auth/application/session_providers.dart';
 import '../../groups/application/group_providers.dart';
 import '../../groups/data/group_repository.dart';
 import '../../groups/domain/group_models.dart';
 import '../../history/domain/ride.dart';
+import '../../history/domain/ride_from_track.dart';
 import '../../map/data/location_repository.dart';
 import '../../map/domain/location_health.dart';
 import '../../map/domain/map_models.dart';
@@ -17,7 +17,6 @@ import '../../map/domain/polyline_codec.dart';
 import '../../map/domain/route_geometry.dart';
 import '../../map/domain/route_tracker.dart';
 import '../../map/domain/track_recorder.dart';
-import '../../map/presentation/solo_ride/solo_ride_controller.dart';
 import '../../settings/application/settings_controller.dart';
 import '../data/trip_channel.dart';
 import '../domain/gap_detector.dart';
@@ -475,26 +474,12 @@ class GroupRideController extends _$GroupRideController {
   Ride? rideToSave() {
     final current = state.value;
     if (current == null) return null;
-    final endedAt = current.endedAt ?? _now();
-    final duration = endedAt.difference(current.startedAt);
-    final path = _track.path;
-    if (path.length < 2 ||
-        _track.distanceMeters < SoloRideController.minSavedDistanceMeters ||
-        duration < SoloRideController.minSavedDuration) {
-      return null;
-    }
-    final progress = current.progress;
-    return Ride(
-      id: const Uuid().v4(),
-      destinationName: current.trip.name,
-      arrived: progress?.arrived ?? false,
-      distanceMeters: _track.distanceMeters,
-      duration: duration,
-      movingTime: _track.movingTime,
-      maxSpeedMps: _track.maxSpeedMps,
+    return rideFromTrack(
+      _track,
       startedAt: current.startedAt,
-      endedAt: endedAt,
-      path: path,
+      endedAt: current.endedAt ?? _now(),
+      arrived: current.progress?.arrived ?? false,
+      destinationName: current.trip.name,
       groupTripId: current.trip.id,
     );
   }

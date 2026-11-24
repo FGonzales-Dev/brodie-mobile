@@ -6,6 +6,7 @@ import '../../../app/router/routes.dart';
 import '../../../core/design_system/design_system.dart';
 import '../../../core/photos/user_avatar.dart';
 import '../../../core/presentation/feedback.dart';
+import '../../../core/presentation/time_labels.dart';
 import '../../../core/utils/units.dart';
 import '../../auth/application/session_providers.dart';
 import '../../map/domain/map_models.dart';
@@ -15,7 +16,7 @@ import '../application/group_lobby_controller.dart';
 import '../application/group_providers.dart';
 import '../domain/group_models.dart';
 import 'group_controllers.dart';
-import 'group_ride_summary_screen.dart';
+import 'widgets/past_group_rides.dart';
 
 /// A group and its ride lobby: the trip the leader planned, who has joined,
 /// and the actions for the rider's role (plan, start or cancel for the
@@ -58,6 +59,14 @@ class _GroupScreenState extends ConsumerState<GroupScreen> {
   }
 
   void _openRide() => context.push(Routes.groupRide(widget.groupId));
+
+  /// Flutter turns tickers off for a screen while another screen covers it
+  /// (the ride, the invite screen); the lobby stops checking the server then.
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _lobby.setVisible(TickerMode.valuesOf(context).enabled);
+  }
 
   Future<void> _start() async {
     setState(() => _busy = true);
@@ -197,7 +206,7 @@ class _Lobby extends ConsumerWidget {
       final startedAt = trip.startedAt;
       final time = startedAt == null
           ? null
-          : MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(startedAt.toLocal()));
+          : clockLabel(context, startedAt);
       status = time == null ? 'Riding now' : 'Riding now · started $time';
     } else {
       status = leader == null || leader.userId == me
@@ -220,7 +229,7 @@ class _Lobby extends ConsumerWidget {
               ),
               const SizedBox(height: BrodieSpace.xxs),
               Text(
-                '${distance.value} ${distance.unit} · ${duration.value} ${duration.unit} · meet at the start of the route',
+                '${distance.text} · ${duration.text} · meet at the start of the route',
                 style: BrodieType.body.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: BrodieSpace.sm),

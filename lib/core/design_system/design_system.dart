@@ -3,6 +3,7 @@
 library;
 
 export 'app_theme.dart';
+export 'components/brodie_alert.dart';
 export 'components/brodie_bottom_nav.dart';
 export 'components/brodie_button.dart';
 export 'components/brodie_dialogs.dart';

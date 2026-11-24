@@ -6,6 +6,7 @@ import 'package:brodie/features/groups/domain/group_models.dart';
 import 'package:brodie/features/map/data/directions_repository.dart';
 import 'package:brodie/features/map/data/location_repository.dart';
 import 'package:brodie/features/map/domain/map_models.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -44,8 +45,13 @@ class _FakeGroups implements GroupRepository {
     riders.add(TripRider(userId: me, seat: 0, isLeader: true));
   }
 
+  var tripFetches = 0;
+
   @override
-  Future<GroupTrip?> fetchOpenTrip(String groupId) async => trip;
+  Future<GroupTrip?> fetchOpenTrip(String groupId) async {
+    tripFetches++;
+    return trip;
+  }
 
   @override
   Future<List<TripRider>> fetchTripRiders(String tripId) async => List.of(riders);
@@ -185,5 +191,25 @@ void main() {
     expect(trip.route.path, hasLength(3));
     expect(trip.route.duration, const Duration(minutes: 5));
     expect(trip.startedAt, isNotNull);
+  });
+
+  test('a lobby covered by another screen stops checking, and catches up when shown', () {
+    fakeAsync((async) {
+      final container = app();
+      container.read(groupLobbyControllerProvider('group-1').future);
+      async.flushMicrotasks();
+      final lobby = container.read(groupLobbyControllerProvider('group-1').notifier);
+
+      async.elapse(const Duration(seconds: 11));
+      expect(server.tripFetches, 3, reason: 'first load, then every 5 s');
+
+      lobby.setVisible(false);
+      async.elapse(const Duration(seconds: 30));
+      expect(server.tripFetches, 3);
+
+      lobby.setVisible(true);
+      async.flushMicrotasks();
+      expect(server.tripFetches, 4, reason: 'one refresh straight away');
+    });
   });
 }
